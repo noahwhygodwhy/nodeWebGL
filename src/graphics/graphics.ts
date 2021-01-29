@@ -2,8 +2,13 @@
 
 //REQUIRES ajax via jQuery
 
-import {common, mat4} from "./gl-matrix-es6.js";
+//import {common, mat4, vec3} from "./gl-matrix-es6.js";
 import {model} from "./model.js"
+
+import * as glm from 'gl-matrix'
+
+
+var x = glm.mat4.create()
 
 var vertSource = `#version 300 es
 
@@ -49,9 +54,7 @@ class renderer
     gl : WebGL2RenderingContext
     program : WebGLProgram
     models : Array<model>
-    // @ts-ignore
-    projection:mat4
-    // @ts-ignore
+    projection:glm.mat4
     view:mat4
 
     constructor(canvas:HTMLCanvasElement)
@@ -68,13 +71,11 @@ class renderer
         this.program = makeProgram(this)
         this.models = new Array<model>()
 
-        // @ts-ignore
-        this.projection = mat4.create()
+        this.projection = glm.mat4.create()
 
-        mat4.identity(this.projection)
+        glm.mat4.identity(this.projection)
 
-        // @ts-ignore
-        this.view = mat4.create()
+        this.view = glm.mat4.create()
 
 
     }
@@ -93,14 +94,12 @@ class renderer
         var viewLoc = this.gl.getUniformLocation(this.program, "view")
         var projectionLoc = this.gl.getUniformLocation(this.program, "projection")
 
-        // @ts-ignore
-        var view = mat4.create()
+        var view = glm.mat4.create()
 
-        // @ts-ignore
-        var projection = mat4.create()
+        var projection = glm.mat4.create()
 
-        this.gl.uniformMatrix4fv(viewLoc, false, this.view);
-        this.gl.uniformMatrix4fv(projectionLoc, false, this.projection);
+        this.gl.uniformMatrix4fv(viewLoc, false, this.view as Float32List); //TODO: if it doesn't work this is the culprit (as float32list) 
+        this.gl.uniformMatrix4fv(projectionLoc, false, this.projection as Float32List);
 
         console.log("there are this many models: " + this.models.length)
 
@@ -109,54 +108,12 @@ class renderer
         
 
     }
-    
-    initModel(modelName:string) //TODO program can be a program
+    addModel(name:string, position?:any)
     {
-        console.log("model name: " + modelName)
-        var jsonData = getModelJson(modelName);    
-        console.log("jsonData: " + jsonData)
-
-        if(jsonData === null)
-        {
-            throw("bad json")
-        }
-
-        var vertices = jsonData["vertices"];
-        var indices = jsonData["indices"];
-        
-        console.log("vertices: " + jsonData.vertices);
-        console.log("indices: " + jsonData.indices);
-
-        var VAO = this.gl.createVertexArray();
-        this.gl.bindVertexArray(VAO);
-
-
-        var VBO = this.gl.createBuffer();
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, VBO);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(vertices), this.gl.STATIC_DRAW);
-
-        
-
-        this.gl.enableVertexAttribArray(this.gl.getAttribLocation(this.program, "aPos"));
-        this.gl.enableVertexAttribArray(this.gl.getAttribLocation(this.program, "uv"));
-        this.gl.vertexAttribPointer(this.gl.getAttribLocation(this.program, "aPos"), 3, this.gl.FLOAT, false, 20, 0);
-        this.gl.vertexAttribPointer(this.gl.getAttribLocation(this.program, "uv"), 2, this.gl.FLOAT, false, 20, 12);
-
-
-        var EBO = this.gl.createBuffer();
-        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, EBO);
-        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Int32Array(indices), this.gl.STATIC_DRAW);
-
-        this.gl.bindVertexArray(null);
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null); 
-        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, null);
-
-
-
-        this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
-
-        this.models.push(new model(indices, vertices, VAO, VBO, EBO))
+        console.log(position)
+        this.models.push(new model(name, this.gl, this.program))
     }
+    
 }
 
 var canvasID = "c"
@@ -223,40 +180,6 @@ function makeProgram(r:renderer): WebGLProgram
     throw("error")
 }
 
-
-
-
-
-
-
-function getModelJson(modelName:string):any
-{
-    var x = null
-    $.ajax(
-        {
-            type: "GET",
-            url: "models/"+modelName+"/"+modelName+".json",
-            data:{},
-            dataType:"json",
-            async:false,
-            success:function(result:any)
-            {
-                console.log("success");
-                console.log(result);
-                x = result
-            },
-            error:function(xhr:any, status:any, error:any)
-            {
-                console.log("ajax error: " + xhr.status + " " + xhr.statusText)
-                console.log(error)
-            }
-        }
-    );
-    console.log(typeof x)
-    return x
-}
-
-
 function resizeCanvas()
 {
     var canvas = document.getElementById(canvasID)
@@ -287,7 +210,7 @@ function init()
 
     //var transform = new mat4;
 
-    r.initModel(modelName)
+    r.addModel(modelName)
 
 
     r.draw()
