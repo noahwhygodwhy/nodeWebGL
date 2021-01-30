@@ -5,10 +5,7 @@
 //import {common, mat4, vec3} from "./gl-matrix-es6.js";
 import {model} from "./model.js"
 
-import * as glm from 'gl-matrix'
-
-
-var x = glm.mat4.create()
+import {mat4, common, vec3} from './gl-matrix-es6.js'
 
 var vertSource = `#version 300 es
 
@@ -54,7 +51,7 @@ class renderer
     gl : WebGL2RenderingContext
     program : WebGLProgram
     models : Array<model>
-    projection:glm.mat4
+    projection:mat4
     view:mat4
 
     constructor(canvas:HTMLCanvasElement)
@@ -71,11 +68,11 @@ class renderer
         this.program = makeProgram(this)
         this.models = new Array<model>()
 
-        this.projection = glm.mat4.create()
+        this.projection = mat4.create()
 
-        glm.mat4.identity(this.projection)
+        mat4.identity(this.projection)
 
-        this.view = glm.mat4.create()
+        this.view = mat4.create()
 
 
     }
@@ -94,9 +91,9 @@ class renderer
         var viewLoc = this.gl.getUniformLocation(this.program, "view")
         var projectionLoc = this.gl.getUniformLocation(this.program, "projection")
 
-        var view = glm.mat4.create()
+        var view = mat4.create()
 
-        var projection = glm.mat4.create()
+        var projection = mat4.create()
 
         this.gl.uniformMatrix4fv(viewLoc, false, this.view as Float32List); //TODO: if it doesn't work this is the culprit (as float32list) 
         this.gl.uniformMatrix4fv(projectionLoc, false, this.projection as Float32List);
@@ -199,7 +196,7 @@ function resizeCanvas()
 
 function init()
 {
-    var modelName = "square"
+    var modelName = "survival backpack"
 
     //init stuff
     var canvas = <HTMLCanvasElement> document.getElementById(canvasID)
@@ -207,6 +204,9 @@ function init()
     window.addEventListener('resize', resizeCanvas);
 
     var r = new renderer(canvas)
+
+
+    
 
     //var transform = new mat4;
 
