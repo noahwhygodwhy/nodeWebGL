@@ -8,7 +8,13 @@
 
 
 import {mat4, common, vec3} from './gl-matrix-es6.js'
+import {material} from "./material.js"
 //var x = mat4.create()
+
+
+var loadedModels = new Map<string, model>()
+
+
 
 function getModelJson(modelName:string):any
 {
@@ -86,6 +92,10 @@ class vertex
         this.uv = uv
     }
 }*/
+
+
+
+
 
 
 //TODO: maybe https://webglfundamentals.org/webgl/lessons/webgl-pulling-vertices.html
@@ -233,6 +243,7 @@ class mesh
 export class model
 {
     children:Array<mesh>
+    materials:Array<material>
     //@ts-ignore
     transform: mat4 //model will still have a transform
     constructor(modelName:string, gl:WebGL2RenderingContext, program :WebGLProgram)
@@ -245,6 +256,13 @@ export class model
         console.log(jsonData)
         console.log("rootnode:" +jsonData.rootnode)
         console.log(jsonData.rootnode.name)
+
+        this.materials = new Array<material>()
+
+        for(let i = 0; i < jsonData.materials.length; i++)
+        {
+            this.materials.push(new material(gl, jsonData.materials[i], modelName))
+        }
 
         console.log("model transformation: " + jsonData.rootnode.transformation)
         this.transform = arrayToMat4(jsonData.rootnode.transformation)

@@ -57,6 +57,7 @@ class renderer
     constructor(canvas:HTMLCanvasElement)
     {
         
+
         var glMaybe = canvas.getContext("webgl2");
         
         if(glMaybe === null)
@@ -65,6 +66,7 @@ class renderer
             throw("No webGL")
         }
         this.gl = glMaybe
+        var x = this.gl.createTexture()
         this.program = makeProgram(this)
         this.models = new Array<model>()
 
