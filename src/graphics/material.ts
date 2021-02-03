@@ -1,38 +1,53 @@
-import { vec3 } from "./gl-matrix-es6";
+import { vec3 } from "./gl-matrix-es6.js";
 
 
 
 var loadedTextures = new Map<string,WebGLTexture>()
 
-
-function makeTexture(gl:any ,modelName:string, imageName:string):WebGLTexture
+function makeTexture(gl:WebGL2RenderingContext ,modelName:string, imageName:string):WebGLTexture
 {
-
+    
     var maybeT = loadedTextures.get(modelName+"-"+imageName)
     if(maybeT != undefined)
     {
+        console.log("texture already loaded")
+
         return maybeT
+    }
+    else
+    {
+        console.log("texture is not already loaded")
     }
 
     const pixel = new Uint8Array([255, 255, 0, 255]);
 
-    var t = gl.createTexture()
-    gl.bindTeture(gl.TEXTURE_2D, t)
+    var t:WebGLTexture;
+    var maybeTTwo = gl.createTexture()
+    if(maybeTTwo === null)
+    {
+        throw("problem creating texture")
+    }
+    t = maybeTTwo
+
+    gl.bindTexture(gl.TEXTURE_2D, t)
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA,
         1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
         pixel);
 
     const image = new Image()
 
-    image.src = "/models/"+modelName + "/" + imageName
-
+    console.log("setting up image")
+    //console.log("image src: "+ image.src)
     image.onload = function()
     {
+        console.log("image loaded");
         gl.bindTexture(gl.TEXTURE_2D, t);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);  
         gl.generateMipmap(gl.TEXTURE_2D);
-        return loadedTextures.set(modelName+"-"+imageName, t)
+        loadedTextures.set(modelName+"-"+imageName, t)
     }
+
+    image.src = "/models/"+modelName + "/" + imageName
     return t;
 
 }
@@ -54,9 +69,9 @@ enum shadingMode //TODO each of these should relate to a different actual frag (
 
 export class material
 {
-    mat_diffuse:any = null
-    mat_specular:any = null
-    mat_height:any = null
+    mat_diffuse: WebGLTexture|null = null
+    mat_specular:WebGLTexture|null = null
+    mat_height:WebGLTexture|null = null
     refraction:number = 0 //ignore unless raytracing
     opacity:number = 1//obv
     shininess:number = 0//shininess if phong, exponent of phong specular equation
@@ -68,13 +83,18 @@ export class material
 
     constructor(gl:WebGL2RenderingContext, matJson:any, modelName:string)
     {
-
-        for(let i = 0; i < matJson.properties; i++)
+        //console.log("making a material")
+        for(let i = 0; i < matJson.properties.length; i++)
         {
+            //console.log("on property " + i)
             var prop = matJson.properties[i]
+            //console.log("they key is : " + prop.key);
             switch(prop.key)
             {
+                case "?mat.name":
+                    break;
                 case "$tex.file":
+                    //console.log("material prop is a tex file");
                     switch(prop.semantic)
                     {
                         case 1:
@@ -123,6 +143,40 @@ export class material
     }
     use(gl:WebGL2RenderingContext, program:WebGLProgram)
     {
-        //TODO
+
+
+        gl.uniform1i(gl.getUniformLocation(program, "hasDiffuse"), this.mat_diffuse != null?1:0)
+        gl.uniform1i(gl.getUniformLocation(program, "hasSpecular"), this.mat_specular != null?1:0)
+        gl.uniform1i(gl.getUniformLocation(program, "hasHeight"), this.mat_height != null?1:0)
+
+
+        var texNum = 0
+        if(this.mat_diffuse != null)
+        {
+            var loc = gl.getUniformLocation(program, "diffuse")
+            gl.uniform1i(loc, texNum)
+            gl.activeTexture(gl.TEXTURE0+texNum);
+            gl.bindTexture(gl.TEXTURE_2D, this.mat_diffuse);
+            texNum++
+        }
+        if(this.mat_specular != null)
+        {
+            var loc = gl.getUniformLocation(program, "specular")
+            gl.uniform1i(loc, texNum)
+            gl.activeTexture(gl.TEXTURE0+texNum);
+            gl.bindTexture(gl.TEXTURE_2D, this.mat_specular);
+            texNum++
+        }
+        if(this.mat_height != null)
+        {
+            var loc = gl.getUniformLocation(program, "height")
+            gl.uniform1i(loc, texNum)
+            gl.activeTexture(gl.TEXTURE0+texNum);
+            gl.bindTexture(gl.TEXTURE_2D, this.mat_height);
+            texNum++
+        }
+        
+        
+        //TODO rest of the properties to the shader, maybe use a specific shader depending on what's available? idk
     }
 }
