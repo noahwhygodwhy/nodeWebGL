@@ -95,28 +95,45 @@ function initializeRenderer(canvas:HTMLCanvasElement)
 
     gl.enable(gl.DEPTH_TEST);
     gl.enable(gl.CULL_FACE);
-    //gl.frontFace(gl.CCW)
+    gl.frontFace(gl.CCW)
 
     gl.useProgram(program)
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
 
 }
-function draw()
+function draw(cT:number)
 {
-    console.log("frame")
+    //console.log(cT)
+    dT = cT-pT;
+
+    //console.log("frame")
+    
+    gl.clearColor(0.95,0.95,0.95,1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
     gl.useProgram(program)
 
     var viewLoc = gl.getUniformLocation(program, "view")
 
 
+    var camX = Math.sin(cT/1000)*5
+    var camZ = Math.cos(cT/1000)*5
+    var camY = 1
+    //camY = 0
+    //camX = 0
 
-    mat4.lookAt(view, [0, 0, -9], [0, 0, 0], [0, 1, 0])
-    mat4.invert(view, view);
+    mat4.lookAt(view, [camX, camY, camZ], [0, 0, 0], [0, 1, 0])
+    //mat4.invert(view, view);
+
+
+    //@ts-ignore
     gl.uniformMatrix4fv(viewLoc, false, view); //TODO: if it doesn't work this is the culprit (as float32list) 
     
+
+
     var projectionLoc = gl.getUniformLocation(program, "projection")
     mat4.perspective(projection, common.toRadian(60), gl.canvas.width / gl.canvas.height, 0.1, 2000)
+    //@ts-ignore
     gl.uniformMatrix4fv(projectionLoc, false, projection);
 
 
@@ -196,7 +213,8 @@ function makeProgram(): WebGLProgram
 
 function main()
 {
-    var modelName = "brickCube"
+    var modelName = "survival backpack"
+    //modelName = "brickCube"
 
     //init stuff
     var canvas = <HTMLCanvasElement> document.getElementById(canvasID)

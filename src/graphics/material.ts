@@ -7,7 +7,7 @@ var loadedTextures = new Map<string,WebGLTexture>()
 function makeTexture(gl:WebGL2RenderingContext ,modelName:string, imageName:string):WebGLTexture
 {
     
-    var maybeT = loadedTextures.get(modelName+"-"+imageName)
+    /*var maybeT = loadedTextures.get(modelName+"-"+imageName)
     if(maybeT != undefined)
     {
         console.log("texture already loaded")
@@ -17,7 +17,7 @@ function makeTexture(gl:WebGL2RenderingContext ,modelName:string, imageName:stri
     else
     {
         console.log("texture is not already loaded")
-    }
+    }*/
 
     const pixel = new Uint8Array([255, 255, 0, 255]);
 
@@ -69,6 +69,7 @@ enum shadingMode //TODO each of these should relate to a different actual frag (
 
 export class material
 {
+    texNum:number;
     mat_diffuse: WebGLTexture|null = null
     mat_specular:WebGLTexture|null = null
     mat_height:WebGLTexture|null = null
@@ -83,6 +84,7 @@ export class material
 
     constructor(gl:WebGL2RenderingContext, matJson:any, modelName:string)
     {
+        this.texNum = 0;
         //console.log("making a material")
         for(let i = 0; i < matJson.properties.length; i++)
         {
@@ -149,34 +151,42 @@ export class material
         gl.uniform1i(gl.getUniformLocation(program, "hasSpecular"), this.mat_specular != null?1:0)
         gl.uniform1i(gl.getUniformLocation(program, "hasHeight"), this.mat_height != null?1:0)
 
+        this.texNum = 0;
 
-        var texNum = 0
         if(this.mat_diffuse != null)
         {
-            var loc = gl.getUniformLocation(program, "diffuse")
-            gl.uniform1i(loc, texNum)
-            gl.activeTexture(gl.TEXTURE0+texNum);
+            //var loc = gl.getUniformLocation(program, "diffuse")
+            //gl.uniform1i(loc, this.texNum)
+            gl.activeTexture(gl.TEXTURE0+this.texNum);
             gl.bindTexture(gl.TEXTURE_2D, this.mat_diffuse);
-            texNum++
+            this.texNum++
         }
         if(this.mat_specular != null)
         {
-            var loc = gl.getUniformLocation(program, "specular")
-            gl.uniform1i(loc, texNum)
-            gl.activeTexture(gl.TEXTURE0+texNum);
+            //var loc = gl.getUniformLocation(program, "specular")
+            //gl.uniform1i(loc, this.texNum)
+            gl.activeTexture(gl.TEXTURE0+this.texNum);
             gl.bindTexture(gl.TEXTURE_2D, this.mat_specular);
-            texNum++
+            this.texNum++
         }
         if(this.mat_height != null)
         {
-            var loc = gl.getUniformLocation(program, "height")
-            gl.uniform1i(loc, texNum)
-            gl.activeTexture(gl.TEXTURE0+texNum);
+            //var loc = gl.getUniformLocation(program, "height")
+            //gl.uniform1i(loc, this.texNum)
+            gl.activeTexture(gl.TEXTURE0+this.texNum);
             gl.bindTexture(gl.TEXTURE_2D, this.mat_height);
-            texNum++
+            this.texNum++
         }
         
         
         //TODO rest of the properties to the shader, maybe use a specific shader depending on what's available? idk
+    }
+    unuse(gl:WebGL2RenderingContext, program:WebGLProgram)
+    {
+        for(let i = 0; i < this.texNum; i++)
+        {
+            gl.activeTexture(gl.TEXTURE0+this.texNum)  
+            gl.bindTexture(gl.TEXTURE_2D, null);
+        }
     }
 }

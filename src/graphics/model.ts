@@ -147,11 +147,17 @@ class mesh
         }
 
         this.vertices = new Float32Array(meshData.vertices)
+        //console.log("has " + this.vertices.length/3 + " triangles");
         this.normals = new Float32Array(meshData.normals)
         this.tangents = new Float32Array(meshData.tangents)
         this.bitangents = new Float32Array(meshData.bitangents)
         
-        this.textureCoords = new Float32Array(meshData.texturecoords);
+        //console.log(meshData.texturecoords)
+        this.textureCoords = new Float32Array(meshData.texturecoords[0]);
+        /*for(let i = 0; i < this.textureCoords.length; i+=2)
+        {
+            console.log(this.textureCoords[i] + ","+this.textureCoords[i+1]);
+        }*/
 
         this.indices = new Int32Array()
         var tempArray = new Array<number>()
@@ -230,6 +236,7 @@ class mesh
         }
 
         //console.log("drawing mesh");
+        //gl.useProgram(program)
         this.mat.use(gl, program)
 
         var transformLoc = gl.getUniformLocation(program, "transform")
@@ -237,8 +244,6 @@ class mesh
         mat4.multiply(globalTransform, parentTransform, this.transform)
         gl.uniformMatrix4fv(transformLoc, false, globalTransform as Float32List);
 
-        gl.clearColor(0.95,0.95,0.95,1);
-        gl.clear(gl.COLOR_BUFFER_BIT);
     
         gl.bindVertexArray(this.vao);
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ebo);
@@ -249,6 +254,7 @@ class mesh
         gl.bindVertexArray(null);
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+        this.mat.unuse(gl, program)
 
     }
 }
@@ -289,6 +295,7 @@ export class model
             if(jsonData.rootnode.children[i].meshes != undefined)
             {
                 var mat = this.materials[jsonData.meshes[jsonData.rootnode.children[i].meshes].materialindex]
+                console.log("uses material #" + jsonData.meshes[jsonData.rootnode.children[i].meshes].materialindex)
                 this.children.push(new mesh(jsonData, jsonData.meshes[meshIndex],jsonData.rootnode.children[i].transformation, mat,  gl, program));
                 meshIndex++
             }
@@ -297,12 +304,14 @@ export class model
 
         this.transform = mat4.rotateY(this.transform, this.transform, common.toRadian(180))
 
-
+        //mat4.scale(this.transform, this.transform, vec3.fromValues(5, 5, 5));
     }
     draw(gl:WebGL2RenderingContext, program :WebGLProgram)
-    {
-        this.transform = mat4.rotateX(this.transform, this.transform, common.toRadian(2))
-        this.transform = mat4.rotateY(this.transform, this.transform, common.toRadian(1))
+    {   
+
+        //mat4.rotate(this.transform, this.transform, common.toRadian(2), [0, 1, 0])
+        //mat4.scale(this.transform, this.transform, vec3.fromValues(1, 1, 1))
+        //this.transform = mat4.rotateY(this.transform, this.transform, common.toRadian(1))
         for(let i = 0; i < this.children.length; i++)
         {
             this.children[i].draw(this.transform, gl, program)
