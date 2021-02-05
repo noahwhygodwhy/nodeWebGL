@@ -5,59 +5,155 @@
 //import {common, mat4, vec3} from "./gl-matrix-es6.js";
 import {model} from "./model.js"
 
-import {mat4, common, vec3} from './gl-matrix-es6.js'
+import {mat4, common, vec3, vec4} from './gl-matrix-es6.js'
 import { request } from "http"
 
 var vertSource = `#version 300 es
 
 precision mediump float;
 
+//vert attributes
 in vec3 aPos;
 in vec3 normal;
 in vec3 tangent;
 in vec3 bitangent;
 in vec2 uv;
 
-//attribute vec3 aPos;
-//attribute vec2 uv;
-
-
+//transform matrices
 uniform mat4 view;
 uniform mat4 projection;
-uniform mat4 transform;
+uniform mat4 model;
+uniform mat4 normalMat;
 
+
+//textures
+uniform sampler2D diffuse;
+uniform sampler2D specular;
+uniform sampler2D height;
+
+//outs
+out vec3 frag_normal;
+out vec3 frag_pos;
 out vec2 frag_uv;
+//out vec3 eyeVector;
+//out vec3 vertPos;
 
 void main()
 {
 
+
     vec3 a = normal;
     a = tangent;
     a = bitangent;
-    //coords = aPos;
-    //texCoords = aUV;
-    gl_Position = projection*view*transform*vec4(aPos, 1.0);
+    
+    gl_Position = projection*view*model*vec4(aPos, 1.0f);
+
     frag_uv = uv;
-    //gl_Position = vec4(aPos, 1.0);
+    frag_normal = mat3(normalMat)*normal;
+    frag_pos = vec3(model*vec4(aPos, 1.0f));
+    //eyeVector = -vec3(clipSpaceV.xyz);
+
 }
 `
 var fragSource = `#version 300 es
 
 precision mediump float;
 
-uniform sampler2D diffuse;
-uniform sampler2D specular;
-uniform sampler2D height;
+uniform sampler2D mat_diffuse;
+uniform sampler2D mat_specular;
+uniform sampler2D mat_height;
+
+uniform vec3 color_diffuse;
+uniform vec3 color_specular;
+uniform vec3 color_ambient;
 
 uniform bool hasDiffuse;
 uniform bool hasSpecular;
 uniform bool hasHeight;
 
+uniform vec4 light_ambient;
+uniform vec4 light_diffuse;
+uniform vec4 light_specular;
+uniform float shininess;
+
+uniform vec3 lightDirection;
+
+uniform vec3 viewPos;
+
+uniform vec3 light_position;
+uniform vec3 light_color;
+
+in vec3 frag_normal;
+in vec3 frag_pos;
 in vec2 frag_uv;
+
 out vec4 FragColor;
 void main()
 {
-    FragColor = texture(diffuse, frag_uv);
+    //ambient calculation
+    vec3 ambient = light_ambient.xyz*color_ambient;
+    vec4 ambientResult = vec4(ambient*color_ambient, 1.0f);
+
+    //diffuse calculation
+    vec3 normal = normalize(frag_normal);
+    vec3 lightDir = normalize(light_position-frag_pos);
+    float diff = max(dot(normal, lightDir), 0.0);
+    vec3 diffuse = diff*light_color;
+    vec4 diffuseResult = vec4(diffuse, 1.0f)*texture(mat_diffuse, frag_uv);
+
+    vec3 viewDir = normalize(viewPos-frag_pos);
+    vec3 reflectDir = reflect(-lightDir, normal);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
+    vec3 specular = vec3(light_specular * spec * vec4(color_specular, 1.0f));
+    vec4 specularResult =  vec4(specular, 1.0f) * texture(mat_specular, frag_uv);
+
+
+    vec4 result = diffuseResult + ambientResult + specularResult;
+
+    
+    FragColor = result;
+
+
+
+    // failure for blinn test
+    //vec3 normalizedLightDir = normalize(-lightDirection);
+    //vec3 normal = normalize(frag_normal);
+    
+
+    //vec4 finalSpecColor = texture(specular, frag_uv) + vec4(color_specular, 1.0f);
+    //vec4 finalDiffuseColor = texture(diffuse, frag_uv) + vec4(color_diffuse, 1.0f);
+
+
+    //float lambertCoef = dot(normalizedLightDir, normal);
+
+    //vec4 Ia = light_ambient * vec4(color_ambient, 1.0f); //TODO maybe diffuse texture here instead?
+
+    //vec4 Id = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    //vec4 Is = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+
+    //if(lambertCoef > 0.0)
+    //{
+    //     Id = light_diffuse * texture(diffuse, frag_uv) * lambertCoef;
+    //     vec3 E = normalize(eyeVector);
+    //     vec3 R = reflect(normalizedLightDir, normal);
+    //     float spec = pow(max(dot(R, E), 0.0), shininess/30.0f);
+    //     Is = light_specular * texture(specular, frag_uv) * spec;
+    // }
+    //FragColor = vec4(vec3(Ia + Id + Is), 1.0);
+
+
+    //float light = dot(normal, -normalizedLightDir);
+
+
+    //FragColor = texture(diffuse, frag_uv);
+
+    //FragColor = (texture(diffuse, frag_uv)*0.8) + (0.2*lightColor);
+
+    //FragColor.rgb *= light;
+
+    //FragColor.rgb *= texture(diffuse, frag_uv);
+
+
     //FragColor = vec4(1,0,0,1);
     //FragColor = vec4(frag_uv.x, frag_uv.y, 0, 1);
 }
@@ -109,18 +205,22 @@ function draw(cT:number)
 
     //console.log("frame")
     
-    gl.clearColor(0.95,0.95,0.95,1);
+    gl.clearColor(0,0,0,1);
     gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.clear(gl.DEPTH_BUFFER_BIT);
     gl.useProgram(program)
 
     var viewLoc = gl.getUniformLocation(program, "view")
 
 
-    var camX = Math.sin(cT/1000)*5
-    var camZ = Math.cos(cT/1000)*5
+    var camX = -Math.sin(cT/1000)*5
+    var camZ = -Math.cos(cT/1000)*5
     var camY = 1
-    //camY = 0
-    //camX = 0
+    camY = 0
+    camX = -5
+    camZ = -5
+
+    var camPos = vec3.fromValues(camX, camY, camZ);
 
     mat4.lookAt(view, [camX, camY, camZ], [0, 0, 0], [0, 1, 0])
     //mat4.invert(view, view);
@@ -137,8 +237,42 @@ function draw(cT:number)
     gl.uniformMatrix4fv(projectionLoc, false, projection);
 
 
+    /*var lightColor = vec4.fromValues(0.8, 0.8, 1.0, 1)
+    var lightDirection = vec3.fromValues(Math.cos(cT/2000), 1, Math.sin(cT/2000))
 
-    models.forEach(m => m.draw(gl, program))
+    var lightColorLoc = gl.getUniformLocation(program, "lightColor")
+
+    var lightDirectionLoc = gl.getUniformLocation(program, "lightDirection")
+    vec4.normalize(lightColor, lightColor)
+    gl.uniform4fv(lightColorLoc, lightColor as Float32Array)
+    
+    vec3.normalize(lightDirection, lightDirection)
+
+    gl.uniform3fv(lightDirectionLoc, lightDirection as Float32Array)*/
+
+
+    var viewPos = vec3.fromValues(camX, camY, camZ);
+    gl.uniform3fv(gl.getUniformLocation(program, "viewPos"), viewPos as Float32Array)
+
+    var lightPos = vec3.fromValues(Math.sin(cT/1000)*10, 0, Math.cos(cT/1000)*10);
+    gl.uniform3fv(gl.getUniformLocation(program, "light_position"), lightPos as Float32Array)
+    var lightColor = vec3.fromValues(1.0, 1.0, 1.0);
+    gl.uniform3fv(gl.getUniformLocation(program, "light_color"), lightColor as Float32Array)
+
+    var ambientLight = vec4.fromValues(0.1, 0.1, 0.1, 1.0);
+    gl.uniform4fv(gl.getUniformLocation(program, "light_ambient"), ambientLight as Float32Array)
+
+    var diffuseLight = vec4.fromValues(0.8, 0.8, 0.8, 1.0);
+    gl.uniform4fv(gl.getUniformLocation(program, "light_diffuse"), diffuseLight as Float32Array)
+
+    var specularLight = vec4.fromValues(0.5, 0.5, 0.5, 1.0);
+    gl.uniform4fv(gl.getUniformLocation(program, "light_specular"), specularLight as Float32Array)
+
+
+
+
+
+    models.forEach(m => m.draw(gl, program, view, dT))
 
     requestAnimationFrame(draw);
 }
@@ -234,7 +368,6 @@ function main()
         canvas.width = window.innerWidth*0.95
         canvas.height = window.innerHeight*0.95
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-        //draw()
     });
 
 
@@ -246,9 +379,7 @@ function main()
 
     addModel(modelName)
 
-    //draw()
     requestAnimationFrame(draw);
-    //draw()
 
 }
 

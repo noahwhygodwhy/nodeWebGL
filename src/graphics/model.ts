@@ -228,7 +228,7 @@ class mesh
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
         
     }
-    draw(parentTransform:mat4, gl:WebGL2RenderingContext, program :WebGLProgram)
+    draw(parentTransform:mat4, gl:WebGL2RenderingContext, program :WebGLProgram, viewMat:mat4, dT:number)
     {
         if(this.vao === null)
         {
@@ -239,10 +239,18 @@ class mesh
         //gl.useProgram(program)
         this.mat.use(gl, program)
 
-        var transformLoc = gl.getUniformLocation(program, "transform")
+        var transformLoc = gl.getUniformLocation(program, "model")
         var globalTransform = mat4.create()
         mat4.multiply(globalTransform, parentTransform, this.transform)
         gl.uniformMatrix4fv(transformLoc, false, globalTransform as Float32List);
+
+
+        var normalMat = mat4.create()
+        mat4.invert(normalMat, globalTransform)
+        mat4.transpose(normalMat, normalMat)
+        
+        var normalMatLoc = gl.getUniformLocation(program, "normalMat")
+        gl.uniformMatrix4fv(normalMatLoc, false, normalMat as Float32List);
 
     
         gl.bindVertexArray(this.vao);
@@ -295,7 +303,7 @@ export class model
             if(jsonData.rootnode.children[i].meshes != undefined)
             {
                 var mat = this.materials[jsonData.meshes[jsonData.rootnode.children[i].meshes].materialindex]
-                console.log("uses material #" + jsonData.meshes[jsonData.rootnode.children[i].meshes].materialindex)
+                //console.log("uses material #" + jsonData.meshes[jsonData.rootnode.children[i].meshes].materialindex)
                 this.children.push(new mesh(jsonData, jsonData.meshes[meshIndex],jsonData.rootnode.children[i].transformation, mat,  gl, program));
                 meshIndex++
             }
@@ -306,15 +314,16 @@ export class model
 
         //mat4.scale(this.transform, this.transform, vec3.fromValues(5, 5, 5));
     }
-    draw(gl:WebGL2RenderingContext, program :WebGLProgram)
+    draw(gl:WebGL2RenderingContext, program :WebGLProgram, viewMat:mat4, dT:number)
     {   
 
+        //mat4.rotate(this.transform, this.transform, common.toRadian(0.5), [0, 1, 0])
         //mat4.rotate(this.transform, this.transform, common.toRadian(2), [0, 1, 0])
         //mat4.scale(this.transform, this.transform, vec3.fromValues(1, 1, 1))
         //this.transform = mat4.rotateY(this.transform, this.transform, common.toRadian(1))
         for(let i = 0; i < this.children.length; i++)
         {
-            this.children[i].draw(this.transform, gl, program)
+            this.children[i].draw(this.transform, gl, program, viewMat, dT)
         }
 
     }

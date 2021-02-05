@@ -153,6 +153,15 @@ export class material
 
         this.texNum = 0;
 
+
+        gl.uniform3fv(gl.getUniformLocation(program, "color_diffuse"), this.color_diffuse as Float32Array)
+        gl.uniform3fv(gl.getUniformLocation(program, "color_specular"), this.color_specular as Float32Array)
+        //console.log("color_ambient: " + this.color_ambient[0]+"," + this.color_ambient[1]+"," + this.color_ambient[2])
+        gl.uniform3fv(gl.getUniformLocation(program, "color_ambient"), this.color_ambient as Float32Array)
+
+        gl.uniform1f(gl.getUniformLocation(program, "shininess"), this.shininess)
+
+
         if(this.mat_diffuse != null)
         {
             //var loc = gl.getUniformLocation(program, "diffuse")
