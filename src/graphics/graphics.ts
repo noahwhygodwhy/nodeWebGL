@@ -81,24 +81,27 @@ uniform vec3 lightDirection;
 uniform vec3 viewPos;
 
 uniform vec3 light_position;
-uniform vec3 light_color;
 
 in vec3 frag_normal;
 in vec3 frag_pos;
 in vec2 frag_uv;
 
+
+//TODO: multiple light array https://stackoverflow.com/questions/13476294/accessing-a-structure-in-vertex-shader-from-the-code-in-webgl
+
+
 out vec4 FragColor;
 void main()
 {
     //ambient calculation
-    vec3 ambient = light_ambient.xyz*color_ambient;
-    vec4 ambientResult = vec4(ambient*color_ambient, 1.0f);
+    //vec3 ambient = light_ambient.xyz*color_ambient;
+    vec4 ambientResult = light_ambient*texture(mat_diffuse, frag_uv);
 
     //diffuse calculation
     vec3 normal = normalize(frag_normal);
     vec3 lightDir = normalize(light_position-frag_pos);
     float diff = max(dot(normal, lightDir), 0.0);
-    vec3 diffuse = diff*light_color;
+    vec3 diffuse = vec3(light_diffuse)*diff;
     vec4 diffuseResult = vec4(diffuse, 1.0f)*texture(mat_diffuse, frag_uv);
 
     vec3 viewDir = normalize(viewPos-frag_pos);
@@ -256,8 +259,8 @@ function draw(cT:number)
 
     var lightPos = vec3.fromValues(Math.sin(cT/1000)*10, 0, Math.cos(cT/1000)*10);
     gl.uniform3fv(gl.getUniformLocation(program, "light_position"), lightPos as Float32Array)
-    var lightColor = vec3.fromValues(1.0, 1.0, 1.0);
-    gl.uniform3fv(gl.getUniformLocation(program, "light_color"), lightColor as Float32Array)
+    //var lightColor = vec3.fromValues(1.0, 1.0, 1.0);
+    //gl.uniform3fv(gl.getUniformLocation(program, "light_color"), lightColor as Float32Array)
 
     var ambientLight = vec4.fromValues(0.1, 0.1, 0.1, 1.0);
     gl.uniform4fv(gl.getUniformLocation(program, "light_ambient"), ambientLight as Float32Array)
