@@ -7,14 +7,14 @@ var loadedTextures = new Map<string,WebGLTexture>()
 function makeTexture(gl:WebGL2RenderingContext ,modelName:string, imageName:string):WebGLTexture
 {
     
-    /*var maybeT = loadedTextures.get(modelName+"-"+imageName)
+    var maybeT = loadedTextures.get(modelName+"-"+imageName)
     if(maybeT != undefined)
     {
-        console.log("texture already loaded")
+        //console.log("texture already loaded")
 
         return maybeT
     }
-    else
+    /*else
     {
         console.log("texture is not already loaded")
     }*/
@@ -47,7 +47,7 @@ function makeTexture(gl:WebGL2RenderingContext ,modelName:string, imageName:stri
         loadedTextures.set(modelName+"-"+imageName, t)
     }
 
-    image.src = "/models/"+modelName + "/" + imageName
+    image.src = "models/"+modelName + "/" + imageName
     return t;
 
 }

@@ -21,7 +21,7 @@ function getModelJson(modelName:string):any
     var x = null
     $.ajax(
         {
-            type: "GET",
+            type: "POST",
             url: "models/"+modelName+"/"+modelName+".json",
             data:{},
             dataType:"json",
@@ -269,54 +269,85 @@ class mesh
 
 
 
-
+var index = 0;
 
 export class model
 {
+
+    id:number;
+
+    originalLocation:mat4;
     children:Array<mesh>
     materials:Array<material>
     //@ts-ignore
     transform: mat4 //model will still have a transform
-    constructor(modelName:string, gl:WebGL2RenderingContext, program :WebGLProgram)
+    constructor(modelName:string, gl:WebGL2RenderingContext, program :WebGLProgram, position?:vec3, rotation?:vec3)
     {
-        var jsonData = getModelJson(modelName);
-        if(jsonData === null)
-        {
-            throw("bad json")
-        }
-
+        this.id = index;
+        index++;
+        this.children = new Array<mesh>()
         this.materials = new Array<material>()
 
-        for(let i = 0; i < jsonData.materials.length; i++)
+
+        var maybeModel = loadedModels.get(modelName)
+        if(maybeModel != undefined)
         {
-            this.materials.push(new material(gl, jsonData.materials[i], modelName))
+            this.children = maybeModel.children;
+            this.materials = maybeModel.materials;
+            //console.log("maybeModel's orig loc: " + maybeModel.originalLocation);
+            this.originalLocation = maybeModel.originalLocation;
+            this.transform = mat4.clone(maybeModel.originalLocation);
         }
-
-        this.transform = arrayToMat4(jsonData.rootnode.transformation)
-        this.children = new Array<mesh>()
-        let l = jsonData.rootnode.children.length;
-
-        var meshIndex = 0;
-        
-        for(let i = 0; i < l; i++)
+        else
         {
-            if(jsonData.rootnode.children[i].meshes != undefined)
+            var jsonData = getModelJson(modelName);
+            if(jsonData === null)
             {
-                var mat = this.materials[jsonData.meshes[jsonData.rootnode.children[i].meshes].materialindex]
-                //console.log("uses material #" + jsonData.meshes[jsonData.rootnode.children[i].meshes].materialindex)
-                this.children.push(new mesh(jsonData, jsonData.meshes[meshIndex],jsonData.rootnode.children[i].transformation, mat,  gl, program));
-                meshIndex++
+                throw("bad json")
             }
+            this.transform = arrayToMat4(jsonData.rootnode.transformation)
+            this.originalLocation = mat4.clone(this.transform);
+    
+    
+            for(let i = 0; i < jsonData.materials.length; i++)
+            {
+                this.materials.push(new material(gl, jsonData.materials[i], modelName))
+            }
+    
+    
+            let l = jsonData.rootnode.children.length;
+    
+            var meshIndex = 0;
             
+            for(let i = 0; i < l; i++)
+            {
+                if(jsonData.rootnode.children[i].meshes != undefined)
+                {
+                    var mat = this.materials[jsonData.meshes[jsonData.rootnode.children[i].meshes].materialindex]
+                    //console.log("uses material #" + jsonData.meshes[jsonData.rootnode.children[i].meshes].materialindex)
+                    this.children.push(new mesh(jsonData, jsonData.meshes[meshIndex],jsonData.rootnode.children[i].transformation, mat,  gl, program));
+                    meshIndex++
+                }
+                
+            }    
+            loadedModels.set(modelName, this);
         }
-
-        this.transform = mat4.rotateY(this.transform, this.transform, common.toRadian(180))
-
+        
+    
+        if(rotation!= undefined)
+        {
+            mat4.rotateX(this.transform, this.transform, common.toRadian(rotation[0]))
+            mat4.rotateY(this.transform, this.transform, common.toRadian(rotation[1]))
+            mat4.rotateZ(this.transform, this.transform, common.toRadian(rotation[2]))
+        }
+        if(position!= undefined)
+        {
+            mat4.translate(this.transform, this.transform, position);
+        }
         //mat4.scale(this.transform, this.transform, vec3.fromValues(5, 5, 5));
     }
     draw(gl:WebGL2RenderingContext, program :WebGLProgram, viewMat:mat4, dT:number)
     {   
-
         //mat4.rotate(this.transform, this.transform, common.toRadian(0.5), [0, 1, 0])
         //mat4.rotate(this.transform, this.transform, common.toRadian(2), [0, 1, 0])
         //mat4.scale(this.transform, this.transform, vec3.fromValues(1, 1, 1))

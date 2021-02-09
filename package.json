@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon -e json,ts --exec \"npx tsc & node lib/app.js\"",
-    "build": "tsc -p .",
+    "startOld": "nodemon -e json,ts --exec \"npx tsc & node lib/app.js\"",
+    "start": "nodemon -e json,ts --exec \"npx tsc & sftp -b sftpCommands.sftp nza3552@glados.cs.rit.edu\"",
     "run": "node lib/app.js"
   },
   "keywords": [],
