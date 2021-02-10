@@ -136,6 +136,18 @@ class mesh
 
         
 
+        if(jsonNode.children !== undefined)
+        {
+            if(jsonNode.children.length != 0)
+            {
+                for(let i = 0; i < jsonNode.children.length; i++)
+                {
+                    this.children.push(new mesh(jsonRoot, jsonRoot.meshes[jsonNode.children[i].meshes], jsonRoot.rootnode.children[i].transformation, mat,  gl, program));
+                }
+            }
+        }
+
+
         var meshData = jsonNode
         if(meshData.primitivetypes != 4)
         {
@@ -317,7 +329,6 @@ export class model
     
             let l = jsonData.rootnode.children.length;
     
-            var meshIndex = 0;
             
             for(let i = 0; i < l; i++)
             {
@@ -325,8 +336,7 @@ export class model
                 {
                     var mat = this.materials[jsonData.meshes[jsonData.rootnode.children[i].meshes].materialindex]
                     //console.log("uses material #" + jsonData.meshes[jsonData.rootnode.children[i].meshes].materialindex)
-                    this.children.push(new mesh(jsonData, jsonData.meshes[meshIndex],jsonData.rootnode.children[i].transformation, mat,  gl, program));
-                    meshIndex++
+                    this.children.push(new mesh(jsonData, jsonData.meshes[jsonData.rootnode.children[i].meshes],jsonData.rootnode.children[i].transformation, mat,  gl, program));
                 }
                 
             }    

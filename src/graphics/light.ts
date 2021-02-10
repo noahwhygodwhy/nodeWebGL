@@ -18,11 +18,9 @@ export function resetLightIndexes()
 
 export function setNrLights(gl:WebGLRenderingContext, program:WebGLProgram)
 {
-    gl.uniform1i(gl.getUniformLocation(program, "nrPointLights"), pointLightIndex+1)
-    gl.uniform1i(gl.getUniformLocation(program, "nrSpotLights"), spotLightIndex+1)
-    gl.uniform1i(gl.getUniformLocation(program, "nrDirectionalLights"), directionalLightIndex+1)
-
-
+    gl.uniform1i(gl.getUniformLocation(program, "nrPointLights"), pointLightIndex)
+    gl.uniform1i(gl.getUniformLocation(program, "nrSpotLights"), spotLightIndex)
+    gl.uniform1i(gl.getUniformLocation(program, "nrDirectionalLights"), directionalLightIndex)
 }
 
 //idk if i actually need this
@@ -92,9 +90,9 @@ export class light_point extends light
     {
         super(ambient, diffuse, specular);
         
-        this.constant = 1;
+        this.constant = 1.0;
         this.linear = 0.1;
-        this.quadratic = 0.01; //yay constants
+        this.quadratic = 0.03; //yay constants
         this.position = position;
 
     }
