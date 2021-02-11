@@ -48,6 +48,7 @@ function makeTexture(gl:WebGL2RenderingContext ,modelName:string, imageName:stri
     }
 
     image.src = "models/"+modelName + "/" + imageName
+    //console.log("src from: " + "models/"+modelName + "/" + imageName)
     return t;
 
 }

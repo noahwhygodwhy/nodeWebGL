@@ -18,20 +18,9 @@ export function resetLightIndexes()
 
 export function setNrLights(gl:WebGLRenderingContext, program:WebGLProgram)
 {
-    gl.uniform1i(gl.getUniformLocation(program, "nrPointLights"), pointLightIndex)
-    gl.uniform1i(gl.getUniformLocation(program, "nrSpotLights"), spotLightIndex)
-    gl.uniform1i(gl.getUniformLocation(program, "nrDirectionalLights"), directionalLightIndex)
-}
-
-//idk if i actually need this
-export enum lightTypes
-{
-    POINT,
-    DIRECTIONAL,
-    SPOT,
-    AMBIENT,
-    AREA,//TODO:
-    OBJECT,//TODO:
+    // gl.uniform1i(gl.getUniformLocation(program, "nrPointLights"), pointLightIndex)
+    // gl.uniform1i(gl.getUniformLocation(program, "nrSpotLights"), spotLightIndex)
+    // gl.uniform1i(gl.getUniformLocation(program, "nrDirectionalLights"), directionalLightIndex)
 }
 
 export class light
@@ -138,7 +127,7 @@ export class light_spot extends light_point
         gl.uniform1f(gl.getUniformLocation(program, "light_spots["+spotLightIndex+"].constant"), this.constant)
         gl.uniform1f(gl.getUniformLocation(program, "light_spots["+spotLightIndex+"].linear"), this.linear)
         gl.uniform1f(gl.getUniformLocation(program, "light_spots["+spotLightIndex+"].quadratic"), this.quadratic)
-        gl.uniform1f(gl.getUniformLocation(program, "light_spots["+spotLightIndex+"].angleRadians"), common.toRadian(this.angleDegrees))
+        gl.uniform1f(gl.getUniformLocation(program, "light_spots["+spotLightIndex+"].phi"), Math.cos(common.toRadian(this.angleDegrees)))
         spotLightIndex++;
     }
 }

@@ -321553,7 +321553,7 @@
 					,"semantic": 1
 					,"index": 0
 					,"type": 3
-					,"value": "de_dust2_material_0.tga"
+					,"value": "de_dust2_material_0.png"
 				}
 			]
 		}
@@ -321632,7 +321632,7 @@
 					,"semantic": 1
 					,"index": 0
 					,"type": 3
-					,"value": "de_dust2_material_1.tga"
+					,"value": "de_dust2_material_1.png"
 				}
 			]
 		}
@@ -321711,7 +321711,7 @@
 					,"semantic": 1
 					,"index": 0
 					,"type": 3
-					,"value": "de_dust2_material_2.tga"
+					,"value": "de_dust2_material_2.png"
 				}
 			]
 		}
@@ -321790,7 +321790,7 @@
 					,"semantic": 1
 					,"index": 0
 					,"type": 3
-					,"value": "de_dust2_material_3.tga"
+					,"value": "de_dust2_material_3.png"
 				}
 			]
 		}
@@ -321869,7 +321869,7 @@
 					,"semantic": 1
 					,"index": 0
 					,"type": 3
-					,"value": "de_dust2_material_4.tga"
+					,"value": "de_dust2_material_4.png"
 				}
 			]
 		}
@@ -321948,7 +321948,7 @@
 					,"semantic": 1
 					,"index": 0
 					,"type": 3
-					,"value": "de_dust2_material_5.tga"
+					,"value": "de_dust2_material_5.png"
 				}
 			]
 		}
@@ -322027,7 +322027,7 @@
 					,"semantic": 1
 					,"index": 0
 					,"type": 3
-					,"value": "de_dust2_material_6.tga"
+					,"value": "de_dust2_material_6.png"
 				}
 			]
 		}
@@ -322106,7 +322106,7 @@
 					,"semantic": 1
 					,"index": 0
 					,"type": 3
-					,"value": "de_dust2_material_7.tga"
+					,"value": "de_dust2_material_7.png"
 				}
 			]
 		}
@@ -322185,7 +322185,7 @@
 					,"semantic": 1
 					,"index": 0
 					,"type": 3
-					,"value": "de_dust2_material_8.tga"
+					,"value": "de_dust2_material_8.png"
 				}
 			]
 		}
@@ -322264,7 +322264,7 @@
 					,"semantic": 1
 					,"index": 0
 					,"type": 3
-					,"value": "de_dust2_material_9.tga"
+					,"value": "de_dust2_material_9.png"
 				}
 			]
 		}
@@ -322343,7 +322343,7 @@
 					,"semantic": 1
 					,"index": 0
 					,"type": 3
-					,"value": "de_dust2_material_10.tga"
+					,"value": "de_dust2_material_10.png"
 				}
 			]
 		}
@@ -322422,7 +322422,7 @@
 					,"semantic": 1
 					,"index": 0
 					,"type": 3
-					,"value": "de_dust2_material_11.tga"
+					,"value": "de_dust2_material_11.png"
 				}
 			]
 		}
@@ -322501,7 +322501,7 @@
 					,"semantic": 1
 					,"index": 0
 					,"type": 3
-					,"value": "de_dust2_material_12.tga"
+					,"value": "de_dust2_material_12.png"
 				}
 			]
 		}
@@ -322580,7 +322580,7 @@
 					,"semantic": 1
 					,"index": 0
 					,"type": 3
-					,"value": "de_dust2_material_13.tga"
+					,"value": "de_dust2_material_13.png"
 				}
 			]
 		}
@@ -322659,7 +322659,7 @@
 					,"semantic": 1
 					,"index": 0
 					,"type": 3
-					,"value": "de_dust2_material_14.tga"
+					,"value": "de_dust2_material_14.png"
 				}
 			]
 		}
@@ -322738,7 +322738,7 @@
 					,"semantic": 1
 					,"index": 0
 					,"type": 3
-					,"value": "de_dust2_material_15.tga"
+					,"value": "de_dust2_material_15.png"
 				}
 			]
 		}
@@ -322817,7 +322817,7 @@
 					,"semantic": 1
 					,"index": 0
 					,"type": 3
-					,"value": "de_dust2_material_16.tga"
+					,"value": "de_dust2_material_16.png"
 				}
 			]
 		}
@@ -322896,7 +322896,7 @@
 					,"semantic": 1
 					,"index": 0
 					,"type": 3
-					,"value": "de_dust2_material_17.tga"
+					,"value": "de_dust2_material_17.png"
 				}
 			]
 		}
@@ -322975,7 +322975,7 @@
 					,"semantic": 1
 					,"index": 0
 					,"type": 3
-					,"value": "de_dust2_material_18.tga"
+					,"value": "de_dust2_material_18.png"
 				}
 			]
 		}
@@ -323054,7 +323054,7 @@
 					,"semantic": 1
 					,"index": 0
 					,"type": 3
-					,"value": "de_dust2_material_19.tga"
+					,"value": "de_dust2_material_19.png"
 				}
 			]
 		}
@@ -323133,7 +323133,7 @@
 					,"semantic": 1
 					,"index": 0
 					,"type": 3
-					,"value": "de_dust2_material_20.tga"
+					,"value": "de_dust2_material_20.png"
 				}
 			]
 		}
@@ -323212,7 +323212,7 @@
 					,"semantic": 1
 					,"index": 0
 					,"type": 3
-					,"value": "de_dust2_material_21.tga"
+					,"value": "de_dust2_material_21.png"
 				}
 			]
 		}
@@ -323291,7 +323291,7 @@
 					,"semantic": 1
 					,"index": 0
 					,"type": 3
-					,"value": "de_dust2_material_22.tga"
+					,"value": "de_dust2_material_22.png"
 				}
 			]
 		}
@@ -323370,7 +323370,7 @@
 					,"semantic": 1
 					,"index": 0
 					,"type": 3
-					,"value": "de_dust2_material_23.tga"
+					,"value": "de_dust2_material_23.png"
 				}
 			]
 		}
@@ -323449,7 +323449,7 @@
 					,"semantic": 1
 					,"index": 0
 					,"type": 3
-					,"value": "de_dust2_material_24.tga"
+					,"value": "de_dust2_material_24.png"
 				}
 			]
 		}
@@ -323528,7 +323528,7 @@
 					,"semantic": 1
 					,"index": 0
 					,"type": 3
-					,"value": "de_dust2_material_25.tga"
+					,"value": "de_dust2_material_25.png"
 				}
 			]
 		}
@@ -323607,7 +323607,7 @@
 					,"semantic": 1
 					,"index": 0
 					,"type": 3
-					,"value": "de_dust2_material_26.tga"
+					,"value": "de_dust2_material_26.png"
 				}
 			]
 		}
@@ -323686,7 +323686,7 @@
 					,"semantic": 1
 					,"index": 0
 					,"type": 3
-					,"value": "de_dust2_material_27.tga"
+					,"value": "de_dust2_material_27.png"
 				}
 			]
 		}
@@ -323765,7 +323765,7 @@
 					,"semantic": 1
 					,"index": 0
 					,"type": 3
-					,"value": "de_dust2_material_28.tga"
+					,"value": "de_dust2_material_28.png"
 				}
 			]
 		}
@@ -323844,7 +323844,7 @@
 					,"semantic": 1
 					,"index": 0
 					,"type": 3
-					,"value": "de_dust2_material_29.tga"
+					,"value": "de_dust2_material_29.png"
 				}
 			]
 		}
@@ -323923,7 +323923,7 @@
 					,"semantic": 1
 					,"index": 0
 					,"type": 3
-					,"value": "de_dust2_material_30.tga"
+					,"value": "de_dust2_material_30.png"
 				}
 			]
 		}
@@ -324002,7 +324002,7 @@
 					,"semantic": 1
 					,"index": 0
 					,"type": 3
-					,"value": "de_dust2_material_31.tga"
+					,"value": "de_dust2_material_31.png"
 				}
 			]
 		}
@@ -324081,7 +324081,7 @@
 					,"semantic": 1
 					,"index": 0
 					,"type": 3
-					,"value": "de_dust2_material_32.tga"
+					,"value": "de_dust2_material_32.png"
 				}
 			]
 		}
@@ -324160,7 +324160,7 @@
 					,"semantic": 1
 					,"index": 0
 					,"type": 3
-					,"value": "de_dust2_material_33.tga"
+					,"value": "de_dust2_material_33.png"
 				}
 			]
 		}

@@ -64,9 +64,9 @@ precision mediump float;
 #define MAX_SPOT_LIGHTS 64
 #define MAX_DIRECTIONAL_LIGHTS 8
 
-uniform int nrPointLights;
-uniform int nrSpotLights;
-uniform int nrDirectionalLights;
+// uniform int nrPointLights;
+// uniform int nrSpotLights;
+// uniform int nrDirectionalLights;
 
 uniform mat4 model;
 
@@ -82,9 +82,6 @@ uniform bool hasDiffuse;
 uniform bool hasSpecular;
 uniform bool hasHeight;
 
-uniform vec4 light_ambient;
-uniform vec4 light_diffuse;
-uniform vec4 light_specular;
 uniform float shininess;
 
 uniform vec3 viewPos;
@@ -119,7 +116,7 @@ struct light_spot{
     float linear;
     float quadratic;
     vec3 direction;
-    vec3 angleRadians;
+    float phi;
 };
 
 uniform light_point light_points[MAX_POINT_LIGHTS];
@@ -127,51 +124,86 @@ uniform light_spot light_spots[MAX_SPOT_LIGHTS];
 uniform light_directional light_directionals[MAX_DIRECTIONAL_LIGHTS];
 
 
-//TODO: multiple light array https://stackoverflow.com/questions/13476294/accessing-a-structure-in-vertex-shader-from-the-code-in-webgl
-
-
 out vec4 FragColor;
 
 
-// vec4 calcSpotLight(light_spot light)
-// {
-
-// }
-
-vec4 calcPointLight(light_point light)
+vec4 calcDirectionalLight(light_directional light, vec3 normal, vec3 viewDir)
 {
+    
     vec4 ambientResult = light.ambient*texture(mat_diffuse, frag_uv);
 
-    vec3 normal = normalize(frag_normal);
-    vec3 lightDir = normalize(light.position-frag_pos);
+    vec3 lightDir = normalize(light.direction);
+    
+    vec3 reflectDir = reflect(-lightDir, normal);
     float diff = max(dot(normal, lightDir), 0.0);
     vec3 diffuse = vec3(light.diffuse)*diff;
     vec4 diffuseResult = vec4(diffuse, 1.0)*texture(mat_diffuse, frag_uv);
 
-    vec3 viewDir = normalize(viewPos-frag_pos);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
+    vec3 specular = vec3(light.specular * spec * vec4(color_specular, 1.0f));
+    vec4 specularResult =  vec4(specular, 1.0f) * texture(mat_specular, frag_uv);
+
+    return vec4(vec3(ambientResult+diffuseResult+specularResult), 1.0);
+}
+
+vec4 calcSpotLight(light_spot light, vec3 normal, vec3 viewDir)
+{
+    vec4 ambientResult = light.ambient*texture(mat_diffuse, frag_uv);
+
+    vec3 lightDir = normalize(light.position-frag_pos);
+    float theta = dot(lightDir, light.direction);
+    if(theta>light.phi)
+    {
+        return vec4(vec3(ambientResult), 1.0f);
+    }
     vec3 reflectDir = reflect(-lightDir, normal);
+    float diff = max(dot(normal, lightDir), 0.0);
+    vec3 diffuse = vec3(light.diffuse)*diff;
+    vec4 diffuseResult = vec4(diffuse, 1.0)*texture(mat_diffuse, frag_uv);
+
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
     vec3 specular = vec3(light.specular * spec * vec4(color_specular, 1.0f));
     vec4 specularResult =  vec4(specular, 1.0f) * texture(mat_specular, frag_uv);
 
     float d = distance(light.position, frag_pos);
 
-    // if((light.constant + (light.linear*d) + (light.quadratic*(d*d))) > 1.0)
-    // {
-    //      return vec4(0.0, 0.0, 1.0, 1.0);
-    // }
+    float attenuation = 1.0/(1.0 + (0.00001*d) + (0.000003*(d*d)));
 
-    float attenuation = 1.0/(1.0 + (0.1*d) + (0.03*(d*d)));
-
-    // float attenuation = 1.0/(light.constant + (light.linear*d) + (light.quadratic*(d*d)));
     ambientResult *= attenuation;
     diffuseResult *= attenuation;
-    if(specularResult.x < 0.0 || specularResult.y < 0.0 || specularResult.z <0.0)
-    {
-        return vec4(0.0, 0.0, 1.0, 1.0);
-    }
-    //specularResult *= attenuation;
-    return (ambientResult+diffuseResult+specularResult);
+    specularResult *= attenuation;
+
+    return vec4(vec3(ambientResult+diffuseResult+specularResult), 1.0);
+    
+}
+
+vec4 calcPointLight(light_point light, vec3 normal, vec3 viewDir)
+{
+
+
+    vec4 ambientResult = light.ambient*texture(mat_diffuse, frag_uv);
+
+    vec3 lightDir = normalize(light.position-frag_pos);
+    
+    vec3 reflectDir = reflect(-lightDir, normal);
+    float diff = max(dot(normal, lightDir), 0.0);
+    vec3 diffuse = vec3(light.diffuse)*diff;
+    vec4 diffuseResult = vec4(diffuse, 1.0)*texture(mat_diffuse, frag_uv);
+
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
+    vec3 specular = vec3(light.specular * spec * vec4(color_specular, 1.0f));
+    vec4 specularResult =  vec4(specular, 1.0f) * texture(mat_specular, frag_uv);
+
+    float d = distance(light.position, frag_pos);
+
+    float attenuation = 1.0/(1.0 + (0.00001*d) + (0.000003*(d*d)));
+
+    ambientResult *= attenuation;
+    diffuseResult *= attenuation;
+    specularResult *= attenuation;
+
+    return vec4(vec3(ambientResult+diffuseResult+specularResult), 1.0);
+    
 }
 
 void main()
@@ -179,17 +211,21 @@ void main()
 
     vec4 result = vec4(0.0f);
 
-    for(int i = 0; i < nrPointLights; i++)
+    vec3 normal = normalize(frag_normal);
+    vec3 viewDir = normalize(viewPos-frag_pos);
+
+    for(int i = 0; i < MAX_POINT_LIGHTS; i++)
     {
-        result+=calcPointLight(light_points[i]);
+        result+=calcPointLight(light_points[i], normal, viewDir);
     }
-
-
-    //result = calcPointLight(light_points[0]);
-    // for(int i = 0; i < nrSpotLights; i++)
-    // {
-    //     result+= calcSpotLight(light_spots[i]);
-    // }
+    for(int i = 0; i < MAX_DIRECTIONAL_LIGHTS; i++)
+    {
+        result+=calcDirectionalLight(light_directionals[i], normal, viewDir);
+    }
+    for(int i = 0; i < MAX_SPOT_LIGHTS; i++)
+    {
+        result+=calcSpotLight(light_spots[i], normal, viewDir);
+    }
     
     FragColor = result;
 }
@@ -281,9 +317,9 @@ function draw(cT:number)
     var camX = -Math.sin(cT/1000)*5
     var camZ = -Math.cos(cT/1000)*5
     var camY = 1
-    camY = 0
-    camX = 0
-    camZ = 5
+    camY = 1000
+    camX = 1000
+    camZ = 1000
 
     //var camPos = vec3.fromValues(camX, camY, camZ);
 
@@ -295,7 +331,7 @@ function draw(cT:number)
 
 
     var projectionLoc = gl.getUniformLocation(program, "projection")
-    mat4.perspective(projection, common.toRadian(90), gl.canvas.width / gl.canvas.height, 0.1, 2000)
+    mat4.perspective(projection, common.toRadian(90), gl.canvas.width / gl.canvas.height, 0.1, 10000)
   
     gl.uniformMatrix4fv(projectionLoc, false, projection as Float32Array);
 
@@ -303,11 +339,9 @@ function draw(cT:number)
     gl.uniform3fv(gl.getUniformLocation(program, "viewPos"), viewPos as Float32Array);
     
 
-    (lights[0] as light_point).position = vec3.fromValues(((cT%10000)/100)-50, 0, 5);
+    //(lights[0] as light_point).position = vec3.fromValues(Math.sin(cT/1000)*500, 500, Math.cos(cT/2000)*500);
     //console.log(((cT%10000)/100)-50)
 
-    let d = vec3.distance(vec3.fromValues(0,0,0), (lights[0] as light_point).position)
-    let attenuation = 1.0/(1.0 + (0.1*d));
     //console.log("atten: " + attenuation)
 
     //console.log((cT%1000)*10)
@@ -398,7 +432,7 @@ function makeProgram(): WebGLProgram
 function main()
 {
     console.log("here2");
-    var modelName = "survivalBackpack"
+    var modelName = "de_dust2"
     //modelName = "brickCube"
 
     //init stuff
@@ -422,12 +456,26 @@ function main()
 
     
 
-    lights.push(new light_point(
+    // lights.push(new light_directional(
+    //     vec4.fromValues(0.1, 0.1, 0.1, 1.0),
+    //     vec4.fromValues(0.2, 0.2, 0.8, 1.0),
+    //     vec4.fromValues(0.5, 0.5, 0.5, 1.0),
+    //     vec3.fromValues(0.2, -1.0, 0.3)
+    // ))
+    lights.push(new light_spot(
         vec4.fromValues(0.1, 0.1, 0.1, 1.0),
         vec4.fromValues(0.2, 0.2, 0.8, 1.0),
         vec4.fromValues(0.5, 0.5, 0.5, 1.0),
-        vec3.fromValues(0, 0, 0)
+        vec3.fromValues(0, 500, 0),
+        vec3.fromValues(0, -1, 0),
+        50
     ))
+    // lights.push(new light_point(
+    //     vec4.fromValues(0.1, 0.1, 0.1, 1.0),
+    //     vec4.fromValues(0.8, 0.2, 0.2, 1.0),
+    //     vec4.fromValues(0.5, 0.5, 0.5, 1.0),
+    //     vec3.fromValues(500,500,500)
+    // ))
 
     // lights.push(new light_point(
     //     vec4.fromValues(0.1, 0.1, 0.1, 1.0),
@@ -436,7 +484,7 @@ function main()
     //     vec3.fromValues(0, 1, 10)
     // ))
 
-    addModel(modelName)
+    addModel(modelName, vec3.fromValues(0, 0, 0), vec3.fromValues(270, 0, 0));
 
     // for(let i = 0; i < 2; i++)
     // {

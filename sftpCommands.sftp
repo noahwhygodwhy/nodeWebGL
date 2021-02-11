@@ -1,4 +1,3 @@
 put -r ./lib /home/stu11/s2/nza3552/public_html/lib -neweronly
 bye
-put -r "D:\OneDrive\!Current Year\Graphics\nodeWebGL\lib" /home/stu11/s2/nza3552/public_html/lib -neweronly
-put -r "D:\OneDrive\!Current Year\Graphics\nodeWebGL\models" /home/stu11/s2/nza3552/public_html/models -neweronly
+put -r ./models /home/stu11/s2/nza3552/public_html/models -neweronly
