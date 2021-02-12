@@ -9,19 +9,7 @@ var directionalLightIndex = 0;
 var spotLightIndex = 0;
 
 
-export function resetLightIndexes()
-{
-    pointLightIndex = 0;
-    directionalLightIndex = 0;
-    spotLightIndex = 0;
-}
 
-export function setNrLights(gl:WebGLRenderingContext, program:WebGLProgram)
-{
-    // gl.uniform1i(gl.getUniformLocation(program, "nrPointLights"), pointLightIndex)
-    // gl.uniform1i(gl.getUniformLocation(program, "nrSpotLights"), spotLightIndex)
-    // gl.uniform1i(gl.getUniformLocation(program, "nrDirectionalLights"), directionalLightIndex)
-}
 
 export class light
 {
@@ -29,14 +17,16 @@ export class light
     ambient:vec4;
     diffuse:vec4;
     specular:vec4;
+    ubo:WebGLBuffer|null;
 
-    constructor(ambient:vec4, 
+    constructor(gl:WebGLRenderingContext, ambient:vec4, 
             diffuse:vec4, 
             specular:vec4)
     {
         this.ambient = ambient;
         this.diffuse = diffuse;
         this.specular = specular;
+        this.ubo = gl.createBuffer();
     }
     use(gl:WebGLRenderingContext, program:WebGLProgram)
     {
@@ -47,11 +37,11 @@ export class light
 export class light_directional extends light
 {
     direction:vec3;
-    constructor(ambient:vec4, 
+    constructor(gl:WebGLRenderingContext, ambient:vec4, 
             diffuse:vec4, 
             specular:vec4, direction:vec3)
     {
-        super(ambient, diffuse, specular);
+        super(gl, ambient, diffuse, specular);
         this.direction = direction;
     }
     use(gl:WebGLRenderingContext, program:WebGLProgram)
@@ -72,12 +62,12 @@ export class light_point extends light
     linear:number;
     quadratic:number;
 
-    constructor(ambient:vec4, 
+    constructor(gl:WebGLRenderingContext, ambient:vec4, 
             diffuse:vec4, 
             specular:vec4,
             position:vec3)
     {
-        super(ambient, diffuse, specular);
+        super(gl, ambient, diffuse, specular);
         
         this.constant = 1.0;
         this.linear = 0.1;
@@ -104,14 +94,15 @@ export class light_spot extends light_point
 {
     direction:vec3;
     angleDegrees:number;
-    constructor(ambient:vec4, 
+    constructor(gl:WebGLRenderingContext, 
+            ambient:vec4, 
             diffuse:vec4, 
             specular:vec4,
             position:vec3,
             direction:vec3,
             angleDegrees:number)
     {
-        super(ambient, diffuse, specular, position);
+        super(gl, ambient, diffuse, specular, position);
         this.direction = direction;
         this.angleDegrees = angleDegrees;
     }

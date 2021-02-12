@@ -7,7 +7,7 @@ import {model} from "./model.js"
 
 import {mat4, common, vec3, vec4} from './gl-matrix-es6.js'
 //import { request } from "http"
-import { light, light_point, light_directional, light_spot, resetLightIndexes, setNrLights } from "./light.js"
+import { light, light_point, light_directional, light_spot } from "./light.js"
 
 
 var vertSource = `#version 300 es
@@ -78,9 +78,9 @@ uniform vec3 color_diffuse;
 uniform vec3 color_specular;
 uniform vec3 color_ambient;
 
-uniform bool hasDiffuse;
-uniform bool hasSpecular;
-uniform bool hasHeight;
+// uniform bool hasDiffuse;
+// uniform bool hasSpecular;
+// uniform bool hasHeight;
 
 uniform float shininess;
 
@@ -89,6 +89,10 @@ uniform vec3 viewPos;
 in vec3 frag_normal;
 in vec3 frag_pos;
 in vec2 frag_uv;
+
+
+uniform
+
 
 struct light_directional
 {
@@ -119,10 +123,11 @@ struct light_spot{
     float phi;
 };
 
+
+
 uniform light_point light_points[MAX_POINT_LIGHTS];
 uniform light_spot light_spots[MAX_SPOT_LIGHTS];
 uniform light_directional light_directionals[MAX_DIRECTIONAL_LIGHTS];
-
 
 out vec4 FragColor;
 
@@ -238,6 +243,8 @@ var lights: Array<light>
 var projection:mat4
 var view:mat4
 
+var lubo: WebGLBuffer|null;
+
 
 var pT:number
 var dT:number
@@ -269,6 +276,9 @@ function initializeRenderer(canvas:HTMLCanvasElement)
     gl.useProgram(program)
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
+
+    lubo = gl.createBuffer();
+    var no = gl.getUniformBlockIndex(program, "blockOne");
 
 }
 
@@ -346,9 +356,9 @@ function draw(cT:number)
 
     //console.log((cT%1000)*10)
 
-    resetLightIndexes()
+    //resetLightIndexes()
     lights.forEach(l => l.use(gl, program))
-    setNrLights(gl, program);
+    //setNrLights(gl, program);
     
 
 
@@ -463,6 +473,7 @@ function main()
     //     vec3.fromValues(0.2, -1.0, 0.3)
     // ))
     lights.push(new light_spot(
+        gl,
         vec4.fromValues(0.1, 0.1, 0.1, 1.0),
         vec4.fromValues(0.2, 0.2, 0.8, 1.0),
         vec4.fromValues(0.5, 0.5, 0.5, 1.0),
