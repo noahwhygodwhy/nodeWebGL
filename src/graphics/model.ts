@@ -323,7 +323,7 @@ export class model
     
             for(let i = 0; i < jsonData.materials.length; i++)
             {
-                this.materials.push(new material(gl, jsonData.materials[i], modelName))
+                this.materials.push(new material(gl, program, jsonData.materials[i], modelName))
             }
     
     

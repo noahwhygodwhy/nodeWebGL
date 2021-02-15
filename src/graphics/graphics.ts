@@ -7,8 +7,13 @@ import {model} from "./model.js"
 
 import {mat4, common, vec3, vec4} from './gl-matrix-es6.js'
 //import { request } from "http"
-import { light, light_point, light_directional, light_spot } from "./light.js"
+import { light, light_point, light_directional, light_spot, setNrLights, resetLightIndexes } from "./light.js"
 
+
+
+var MAX_POINT_LIGHTS = 2
+var MAX_SPOT_LIGHTS = 2
+var MAX_DIRECTIONAL_LIGHTS = 2
 
 var vertSource = `#version 300 es
 
@@ -22,6 +27,7 @@ in vec3 bitangent;
 in vec2 uv;
 
 //transform matrices
+
 uniform mat4 view;
 uniform mat4 projection;
 uniform mat4 model;
@@ -60,29 +66,57 @@ var fragSource = `#version 300 es
 
 precision mediump float;
 
-#define MAX_POINT_LIGHTS 64
-#define MAX_SPOT_LIGHTS 64
-#define MAX_DIRECTIONAL_LIGHTS 8
+#define MAX_POINT_LIGHTS MAX_POINT_LIGHTS_REPLACE
+#define MAX_SPOT_LIGHTS MAX_SPOT_LIGHTS_REPLACE
+#define MAX_DIRECTIONAL_LIGHTS MAX_DIRECTIONAL_LIGHTS_REPLACE
 
-// uniform int nrPointLights;
-// uniform int nrSpotLights;
-// uniform int nrDirectionalLights;
+uniform int nrPointLights;
+uniform int nrSpotLights;
+uniform int nrDirectionalLights;
 
 uniform mat4 model;
 
-uniform sampler2D mat_diffuse;
+
+
+layout (std140) uniform Material
+{
+
+    // float indicator;
+
+    // //where n = 4 bytes
+    vec4 color_diffuse; //4n 0
+    vec4 color_specular; //4n 16
+    vec4 color_ambient; //4n  32
+    
+    float shininess; //n 48
+
+    bool hasDiffuse; //n 52
+    bool hasSpecular; //n 56
+    bool hasHeight; //n 60
+};
+
+// layout (std140) uniform Lights
+// {
+//     //TODO:
+//     uniform light_point light_points[MAX_POINT_LIGHTS];
+//     uniform light_spot light_spots[MAX_SPOT_LIGHTS];
+//     uniform light_directional light_directionals[MAX_DIRECTIONAL_LIGHTS];
+// }
+
+uniform sampler2D mat_diffuse; //TODO make into array of sampler2Ds with the assimp indexing
 uniform sampler2D mat_specular;
 uniform sampler2D mat_height;
 
-uniform vec3 color_diffuse;
-uniform vec3 color_specular;
-uniform vec3 color_ambient;
+// uniform vec3 color_diffuse;
+// uniform vec3 color_specular;
+// uniform vec3 color_ambient;
+
+// uniform float shininess;
+
 
 // uniform bool hasDiffuse;
 // uniform bool hasSpecular;
 // uniform bool hasHeight;
-
-uniform float shininess;
 
 uniform vec3 viewPos;
 
@@ -91,7 +125,6 @@ in vec3 frag_pos;
 in vec2 frag_uv;
 
 
-uniform
 
 
 struct light_directional
@@ -124,10 +157,10 @@ struct light_spot{
 };
 
 
-
 uniform light_point light_points[MAX_POINT_LIGHTS];
 uniform light_spot light_spots[MAX_SPOT_LIGHTS];
 uniform light_directional light_directionals[MAX_DIRECTIONAL_LIGHTS];
+
 
 out vec4 FragColor;
 
@@ -145,7 +178,7 @@ vec4 calcDirectionalLight(light_directional light, vec3 normal, vec3 viewDir)
     vec4 diffuseResult = vec4(diffuse, 1.0)*texture(mat_diffuse, frag_uv);
 
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
-    vec3 specular = vec3(light.specular * spec * vec4(color_specular, 1.0f));
+    vec3 specular = vec3(light.specular * spec * color_specular);
     vec4 specularResult =  vec4(specular, 1.0f) * texture(mat_specular, frag_uv);
 
     return vec4(vec3(ambientResult+diffuseResult+specularResult), 1.0);
@@ -167,7 +200,7 @@ vec4 calcSpotLight(light_spot light, vec3 normal, vec3 viewDir)
     vec4 diffuseResult = vec4(diffuse, 1.0)*texture(mat_diffuse, frag_uv);
 
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
-    vec3 specular = vec3(light.specular * spec * vec4(color_specular, 1.0f));
+    vec3 specular = vec3(light.specular * spec * color_specular);
     vec4 specularResult =  vec4(specular, 1.0f) * texture(mat_specular, frag_uv);
 
     float d = distance(light.position, frag_pos);
@@ -196,7 +229,7 @@ vec4 calcPointLight(light_point light, vec3 normal, vec3 viewDir)
     vec4 diffuseResult = vec4(diffuse, 1.0)*texture(mat_diffuse, frag_uv);
 
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
-    vec3 specular = vec3(light.specular * spec * vec4(color_specular, 1.0f));
+    vec3 specular = vec3(light.specular * spec * color_specular);
     vec4 specularResult =  vec4(specular, 1.0f) * texture(mat_specular, frag_uv);
 
     float d = distance(light.position, frag_pos);
@@ -214,20 +247,23 @@ vec4 calcPointLight(light_point light, vec3 normal, vec3 viewDir)
 void main()
 {
 
+
+
+
     vec4 result = vec4(0.0f);
 
     vec3 normal = normalize(frag_normal);
     vec3 viewDir = normalize(viewPos-frag_pos);
 
-    for(int i = 0; i < MAX_POINT_LIGHTS; i++)
+    for(int i = 0; i < min(nrPointLights, MAX_POINT_LIGHTS); i++)
     {
         result+=calcPointLight(light_points[i], normal, viewDir);
     }
-    for(int i = 0; i < MAX_DIRECTIONAL_LIGHTS; i++)
+    for(int i = 0; i < min(nrDirectionalLights, MAX_DIRECTIONAL_LIGHTS); i++)
     {
         result+=calcDirectionalLight(light_directionals[i], normal, viewDir);
     }
-    for(int i = 0; i < MAX_SPOT_LIGHTS; i++)
+    for(int i = 0; i < min(nrSpotLights, MAX_SPOT_LIGHTS); i++)
     {
         result+=calcSpotLight(light_spots[i], normal, viewDir);
     }
@@ -236,14 +272,14 @@ void main()
 }
 `
 
+
 var gl : WebGL2RenderingContext
 var program : WebGLProgram
 var models : Array<model>
 var lights: Array<light>
 var projection:mat4
 var view:mat4
-
-var lubo: WebGLBuffer|null;
+var lubo:mat4
 
 
 var pT:number
@@ -262,7 +298,7 @@ function initializeRenderer(canvas:HTMLCanvasElement)
         throw("No webGL")
     }
     gl = glMaybe
-    var x = gl.createTexture()
+    //var x = gl.createTexture()
     program = makeProgram()
     models = new Array<model>();
     lights = new Array<light>();
@@ -277,8 +313,6 @@ function initializeRenderer(canvas:HTMLCanvasElement)
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
 
-    lubo = gl.createBuffer();
-    var no = gl.getUniformBlockIndex(program, "blockOne");
 
 }
 
@@ -349,16 +383,16 @@ function draw(cT:number)
     gl.uniform3fv(gl.getUniformLocation(program, "viewPos"), viewPos as Float32Array);
     
 
-    //(lights[0] as light_point).position = vec3.fromValues(Math.sin(cT/1000)*500, 500, Math.cos(cT/2000)*500);
+    (lights[0] as light_point).position = vec3.fromValues(Math.sin(cT/1000)*500, 500, Math.cos(cT/2000)*500);
     //console.log(((cT%10000)/100)-50)
 
     //console.log("atten: " + attenuation)
 
     //console.log((cT%1000)*10)
 
-    //resetLightIndexes()
-    lights.forEach(l => l.use(gl, program))
-    //setNrLights(gl, program);
+    resetLightIndexes()
+    lights.forEach(l => l.use(gl, program)) //TODO: can split this into a use in init and then a draw call each frame
+    setNrLights(gl, program);
     
 
 
@@ -417,6 +451,12 @@ function makeProgram(): WebGLProgram
 
 
 
+
+    fragSource = fragSource.replace("MAX_SPOT_LIGHTS_REPLACE", ""+MAX_SPOT_LIGHTS)
+    fragSource = fragSource.replace("MAX_DIRECTIONAL_LIGHTS_REPLACE", ""+MAX_DIRECTIONAL_LIGHTS)
+    fragSource = fragSource.replace("MAX_POINT_LIGHTS_REPLACE", ""+MAX_POINT_LIGHTS)
+
+
     var fragShader = makeShader(fragSource, gl.FRAGMENT_SHADER)
     var vertShader = makeShader(vertSource, gl.VERTEX_SHADER)
 
@@ -472,21 +512,22 @@ function main()
     //     vec4.fromValues(0.5, 0.5, 0.5, 1.0),
     //     vec3.fromValues(0.2, -1.0, 0.3)
     // ))
-    lights.push(new light_spot(
+    // lights.push(new light_spot(
+    //     gl,
+    //     vec4.fromValues(0.1, 0.1, 0.1, 1.0),
+    //     vec4.fromValues(0.2, 0.2, 0.8, 1.0),
+    //     vec4.fromValues(0.5, 0.5, 0.5, 1.0),
+    //     vec3.fromValues(0, 500, 0),
+    //     vec3.fromValues(0, -1, 0),
+    //     50
+    // ))
+    lights.push(new light_point(
         gl,
         vec4.fromValues(0.1, 0.1, 0.1, 1.0),
-        vec4.fromValues(0.2, 0.2, 0.8, 1.0),
+        vec4.fromValues(0.8, 0.2, 0.2, 1.0),
         vec4.fromValues(0.5, 0.5, 0.5, 1.0),
-        vec3.fromValues(0, 500, 0),
-        vec3.fromValues(0, -1, 0),
-        50
+        vec3.fromValues(500,500,500)
     ))
-    // lights.push(new light_point(
-    //     vec4.fromValues(0.1, 0.1, 0.1, 1.0),
-    //     vec4.fromValues(0.8, 0.2, 0.2, 1.0),
-    //     vec4.fromValues(0.5, 0.5, 0.5, 1.0),
-    //     vec3.fromValues(500,500,500)
-    // ))
 
     // lights.push(new light_point(
     //     vec4.fromValues(0.1, 0.1, 0.1, 1.0),

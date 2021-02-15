@@ -1,8 +1,16 @@
-import { vec3 } from "./gl-matrix-es6.js";
+import { vec3,vec4} from "./gl-matrix-es6.js";
 
 
 
 var loadedTextures = new Map<string,WebGLTexture>()
+
+
+
+
+function dirtyVec4(i:vec3):vec4
+{
+    return vec4.fromValues(i[0], i[1], i[2], 1.0);
+}
 
 function makeTexture(gl:WebGL2RenderingContext ,modelName:string, imageName:string):WebGLTexture
 {
@@ -81,9 +89,9 @@ export class material
     color_diffuse:vec3 = vec3.fromValues(0, 0, 0)
     color_ambient:vec3 = vec3.fromValues(0, 0, 0)
     shadingMode:shadingMode = shadingMode.flat//http://assimp.sourceforge.net/lib_html/material_8h.html#a93e23e0201d6ed86fb4287e15218e4cf
+    ubo:WebGLBuffer|null;
 
-
-    constructor(gl:WebGL2RenderingContext, matJson:any, modelName:string)
+    constructor(gl:WebGL2RenderingContext, program:WebGLProgram, matJson:any, modelName:string)
     {
         this.texNum = 0;
         //console.log("making a material")
@@ -138,29 +146,46 @@ export class material
                     throw("not handling " + prop.key)
             }
         }
-        //switch case
+        
 
-        //retreive the textures,
-        //place the values
-        //maybe have a .use()?
+
+        this.ubo = gl.createBuffer();
+        gl.bindBuffer(gl.UNIFORM_BUFFER, this.ubo);
+        gl.bufferData(gl.UNIFORM_BUFFER, 64, gl.STATIC_DRAW);
+
+        gl.bufferSubData(gl.UNIFORM_BUFFER, 0,  new Float32Array(dirtyVec4(this.color_diffuse))); //TODO vec3 is broke, disect it
+        gl.bufferSubData(gl.UNIFORM_BUFFER, 16, new Float32Array(dirtyVec4(this.color_specular)));
+        gl.bufferSubData(gl.UNIFORM_BUFFER, 32, new Float32Array(dirtyVec4(this.color_ambient)));
+        gl.bufferSubData(gl.UNIFORM_BUFFER, 48, new Float32Array(this.shininess));
+        gl.bufferSubData(gl.UNIFORM_BUFFER, 52, new Float32Array([this.mat_diffuse != null?1:0]));
+        gl.bufferSubData(gl.UNIFORM_BUFFER, 56, new Float32Array([this.mat_specular != null?1:0]));
+        gl.bufferSubData(gl.UNIFORM_BUFFER, 60, new Float32Array([this.mat_height != null?1:0]));
+        gl.bindBuffer(gl.UNIFORM_BUFFER, null);
+
     }
     use(gl:WebGL2RenderingContext, program:WebGLProgram)
     {
+        gl.bindBuffer(gl.UNIFORM_BUFFER, this.ubo);
+        var matUniformIndex = gl.getUniformBlockIndex(program, "Material")
+        //console.log("matuniformindex: " + matUniformIndex)
+        gl.uniformBlockBinding(program, matUniformIndex, 0)
+        gl.bindBufferBase(gl.UNIFORM_BUFFER, 0, this.ubo)
+        //gl.bindBufferBase(gl.UNIFORM_BUFFER, matUniformIndex, this.ubo)
+        
 
 
-        gl.uniform1i(gl.getUniformLocation(program, "hasDiffuse"), this.mat_diffuse != null?1:0)
-        gl.uniform1i(gl.getUniformLocation(program, "hasSpecular"), this.mat_specular != null?1:0)
-        gl.uniform1i(gl.getUniformLocation(program, "hasHeight"), this.mat_height != null?1:0)
+
+        // gl.uniform1i(gl.getUniformLocation(program, "hasDiffuse"), this.mat_diffuse != null?1:0)
+        // gl.uniform1i(gl.getUniformLocation(program, "hasSpecular"), this.mat_specular != null?1:0)
+        // gl.uniform1i(gl.getUniformLocation(program, "hasHeight"), this.mat_height != null?1:0)
 
         this.texNum = 0;
 
+        // gl.uniform3fv(gl.getUniformLocation(program, "color_diffuse"), this.color_diffuse as Float32Array)
+        // gl.uniform3fv(gl.getUniformLocation(program, "color_specular"), this.color_specular as Float32Array)
+        // gl.uniform3fv(gl.getUniformLocation(program, "color_ambient"), this.color_ambient as Float32Array)
 
-        gl.uniform3fv(gl.getUniformLocation(program, "color_diffuse"), this.color_diffuse as Float32Array)
-        gl.uniform3fv(gl.getUniformLocation(program, "color_specular"), this.color_specular as Float32Array)
-        //console.log("color_ambient: " + this.color_ambient[0]+"," + this.color_ambient[1]+"," + this.color_ambient[2])
-        gl.uniform3fv(gl.getUniformLocation(program, "color_ambient"), this.color_ambient as Float32Array)
-
-        gl.uniform1f(gl.getUniformLocation(program, "shininess"), this.shininess)
+        // gl.uniform1f(gl.getUniformLocation(program, "shininess"), this.shininess)
 
 
         if(this.mat_diffuse != null)

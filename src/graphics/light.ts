@@ -9,7 +9,19 @@ var directionalLightIndex = 0;
 var spotLightIndex = 0;
 
 
+export function resetLightIndexes()
+{
+    pointLightIndex = 0;
+    directionalLightIndex = 0;
+    spotLightIndex = 0;
+}
 
+export function setNrLights(gl:WebGLRenderingContext, program:WebGLProgram)
+{
+    gl.uniform1i(gl.getUniformLocation(program, "nrPointLights"), pointLightIndex)
+    gl.uniform1i(gl.getUniformLocation(program, "nrSpotLights"), spotLightIndex)
+    gl.uniform1i(gl.getUniformLocation(program, "nrDirectionalLights"), directionalLightIndex)
+}
 
 export class light
 {
