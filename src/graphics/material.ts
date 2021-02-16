@@ -6,7 +6,7 @@ var loadedTextures = new Map<string,WebGLTexture>()
 
 
 
-function dirtyVec4(i:vec3):vec4
+export function dirtyVec4(i:vec3):vec4
 {
     return vec4.fromValues(i[0], i[1], i[2], 1.0);
 }

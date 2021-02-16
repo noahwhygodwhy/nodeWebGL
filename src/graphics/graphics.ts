@@ -7,8 +7,7 @@ import {model} from "./model.js"
 
 import {mat4, common, vec3, vec4} from './gl-matrix-es6.js'
 //import { request } from "http"
-import { light, light_point, light_directional, light_spot, setNrLights, resetLightIndexes, lights } from "./light.js"
-import {pointLightBufferOffset, spotLightBufferOffset, directionalLightBufferOffset} from "./light.js"
+import { light, light_point, light_directional, light_spot, lights, bufferLights } from "./light.js"
 
 
 export var MAX_POINT_LIGHTS = 2
@@ -70,13 +69,11 @@ precision mediump float;
 #define MAX_SPOT_LIGHTS MAX_SPOT_LIGHTS_REPLACE
 #define MAX_DIRECTIONAL_LIGHTS MAX_DIRECTIONAL_LIGHTS_REPLACE
 
-uniform int nrPointLights;
-uniform int nrSpotLights;
-uniform int nrDirectionalLights;
+// uniform int nrPointLights;
+// uniform int nrSpotLights;
+// uniform int nrDirectionalLights;
 
 uniform mat4 model;
-
-
 
 layout (std140) uniform Material
 {
@@ -94,41 +91,6 @@ layout (std140) uniform Material
     bool hasSpecular; //n 56
     bool hasHeight; //n 60
 };
-
-// layout (std140) uniform Lights
-// {
-    
-    // uniform int nrPointLights;
-    // uniform int nrSpotLights;
-    // uniform int nrDirectionalLights;
-//     //TODO:
-//     uniform light_point light_points[MAX_POINT_LIGHTS];
-//     uniform light_spot light_spots[MAX_SPOT_LIGHTS];
-//     uniform light_directional light_directionals[MAX_DIRECTIONAL_LIGHTS];
-// }
-
-uniform sampler2D mat_diffuse; //TODO make into array of sampler2Ds with the assimp indexing
-uniform sampler2D mat_specular;
-uniform sampler2D mat_height;
-
-// uniform vec3 color_diffuse;
-// uniform vec3 color_specular;
-// uniform vec3 color_ambient;
-
-// uniform float shininess;
-
-
-// uniform bool hasDiffuse;
-// uniform bool hasSpecular;
-// uniform bool hasHeight;
-
-uniform vec3 viewPos;
-
-in vec3 frag_normal;
-in vec3 frag_pos;
-in vec2 frag_uv;
-
-
 
 
 struct light_directional
@@ -153,17 +115,50 @@ struct light_spot{
     vec4 diffuse;
     vec4 specular;
     vec3 position;
+    vec3 direction;
     float constant;
     float linear;
     float quadratic;
-    vec3 direction;
     float phi;
 };
 
+layout (std140) uniform Lights
+{
+    int nrPointLights;
+    int nrSpotLights;
+    int nrDirectionalLights;
+    //TODO:
+    light_point light_points[MAX_POINT_LIGHTS];
+    light_spot light_spots[MAX_SPOT_LIGHTS];
+    light_directional light_directionals[MAX_DIRECTIONAL_LIGHTS];
+};
 
-uniform light_point light_points[MAX_POINT_LIGHTS];
-uniform light_spot light_spots[MAX_SPOT_LIGHTS];
-uniform light_directional light_directionals[MAX_DIRECTIONAL_LIGHTS];
+uniform sampler2D mat_diffuse; //TODO make into array of sampler2Ds with the assimp indexing
+uniform sampler2D mat_specular;
+uniform sampler2D mat_height;
+
+// uniform vec3 color_diffuse;
+// uniform vec3 color_specular;
+// uniform vec3 color_ambient;
+
+// uniform float shininess;
+
+
+// uniform bool hasDiffuse;
+// uniform bool hasSpecular;
+// uniform bool hasHeight;
+
+uniform vec3 viewPos;
+
+in vec3 frag_normal;
+in vec3 frag_pos;
+in vec2 frag_uv;
+
+
+
+// uniform light_point light_points[MAX_POINT_LIGHTS];
+// uniform light_spot light_spots[MAX_SPOT_LIGHTS];
+// uniform light_directional light_directionals[MAX_DIRECTIONAL_LIGHTS];
 
 
 out vec4 FragColor;
@@ -282,7 +277,6 @@ var program : WebGLProgram
 var models : Array<model>
 var projection:mat4
 var view:mat4
-var lubo:WebGLBuffer|null
 
 
 var pT:number
@@ -314,8 +308,7 @@ function initializeRenderer(canvas:HTMLCanvasElement)
     gl.useProgram(program)
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
-    lubo = gl.createBuffer();
-
+    light.lubo = gl.createBuffer();
 
 
 
@@ -391,15 +384,17 @@ function draw(cT:number)
     
 
     (lights[0] as light_point).position = vec3.fromValues(Math.sin(cT/1000)*500, 500, Math.cos(cT/2000)*500);
-    //console.log(((cT%10000)/100)-50)
 
-    //console.log("atten: " + attenuation)
 
-    //console.log((cT%1000)*10)
+    gl.bindBuffer(gl.UNIFORM_BUFFER, light.lubo);
+    var lightUniformIndex = gl.getUniformBlockIndex(program, "Lights")
+    gl.uniformBlockBinding(program, lightUniformIndex, 1)
+    gl.bindBufferBase(gl.UNIFORM_BUFFER, 1, light.lubo)
 
-    resetLightIndexes()
-    lights.forEach(l => l.use(gl, program)) //TODO: can split this into a use in init and then a draw call each frame
-    setNrLights(gl, program);
+
+    // resetLightIndexes()
+    // lights.forEach(l => l.use(gl, program)) //TODO: can split this into a use in init and then a draw call each frame
+    // setNrLights(gl, program);
     
 
 
@@ -487,16 +482,12 @@ function makeProgram(): WebGLProgram
 
 
 
-function bufferLights(gl:WebGL2RenderingContext, lubo:WebGLBuffer)
-{
-    gl.bindBuffer(gl.UNIFORM_BUFFER, lubo);
-
-    let totalLightBufferSize = (light_point.sizeInBuffer()*MAX_POINT_LIGHTS)+(light_spot.sizeInBuffer() * MAX_SPOT_LIGHTS) + (light_directional.sizeInBuffer()*MAX_DIRECTIONAL_LIGHTS);
-    gl.bufferData(gl.UNIFORM_BUFFER, totalLightBufferSize, gl.DYNAMIC_DRAW)
-}
 
 
 
+export var pointLightBufferOffset:number;
+export var spotLightBufferOffset:number;
+export var directionalLightBufferOffset:number;
 
 function main()
 {
@@ -579,7 +570,7 @@ function main()
     //     addModel(modelName, vec3.fromValues(x, y, z), vec3.fromValues(rotx, roty, rotz));
     // }
 
-    bufferLights();
+    bufferLights(gl, program);
 
     requestAnimationFrame(draw);
 
