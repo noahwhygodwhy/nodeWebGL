@@ -29,7 +29,6 @@ export class light
     ambient:vec4;
     diffuse:vec4;
     specular:vec4;
-    ubo:WebGLBuffer|null;
 
     constructor(gl:WebGLRenderingContext, ambient:vec4, 
             diffuse:vec4, 
@@ -38,11 +37,14 @@ export class light
         this.ambient = ambient;
         this.diffuse = diffuse;
         this.specular = specular;
-        this.ubo = gl.createBuffer();
     }
     use(gl:WebGLRenderingContext, program:WebGLProgram)
     {
         console.error("lights use should not be called");
+    }
+    sizeInBuffer()
+    {
+        return 48;
     }
 }
 
@@ -64,6 +66,12 @@ export class light_directional extends light
         gl.uniform4fv(gl.getUniformLocation(program, "light_directionals["+directionalLightIndex+"].specular"), this.specular as Float32Array)
         directionalLightIndex++;
     }
+    sizeInBuffer()
+    {
+        return 16+super.sizeInBuffer();
+    }
+    
+
 }
 
 export class light_point extends light
@@ -100,6 +108,10 @@ export class light_point extends light
         gl.uniform1f(gl.getUniformLocation(program, "light_points["+pointLightIndex+"].quadratic"), this.quadratic)
         pointLightIndex++;
     }
+    sizeInBuffer()
+    {
+        return 28+super.sizeInBuffer();
+    }
 }
 
 export class light_spot extends light_point
@@ -132,6 +144,14 @@ export class light_spot extends light_point
         gl.uniform1f(gl.getUniformLocation(program, "light_spots["+spotLightIndex+"].quadratic"), this.quadratic)
         gl.uniform1f(gl.getUniformLocation(program, "light_spots["+spotLightIndex+"].phi"), Math.cos(common.toRadian(this.angleDegrees)))
         spotLightIndex++;
+    }
+    sizeInBuffer()
+    {
+        return 20+super.sizeInBuffer();
+    }
+    bufferIt()
+    {
+
     }
 }
 

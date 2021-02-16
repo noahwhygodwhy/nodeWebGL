@@ -279,7 +279,7 @@ var models : Array<model>
 var lights: Array<light>
 var projection:mat4
 var view:mat4
-var lubo:mat4
+var lubo:WebGLBuffer|null
 
 
 var pT:number
@@ -313,6 +313,14 @@ function initializeRenderer(canvas:HTMLCanvasElement)
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
 
+
+    lubo = gl.createBuffer();
+    gl.bindBuffer(gl.UNIFORM_BUFFER, lubo);
+
+
+
+
+    
 
 }
 
@@ -479,6 +487,12 @@ function makeProgram(): WebGLProgram
 }
 
 
+function bufferLights()
+{
+    
+}
+
+
 function main()
 {
     console.log("here2");
@@ -506,6 +520,9 @@ function main()
 
     
 
+
+
+
     // lights.push(new light_directional(
     //     vec4.fromValues(0.1, 0.1, 0.1, 1.0),
     //     vec4.fromValues(0.2, 0.2, 0.8, 1.0),
@@ -529,6 +546,10 @@ function main()
         vec3.fromValues(500,500,500)
     ))
 
+
+
+
+    
     // lights.push(new light_point(
     //     vec4.fromValues(0.1, 0.1, 0.1, 1.0),
     //     vec4.fromValues(0.8, 0.2, 0.2, 1.0),
@@ -549,6 +570,8 @@ function main()
     //     var z = (Math.random()*40)-20
     //     addModel(modelName, vec3.fromValues(x, y, z), vec3.fromValues(rotx, roty, rotz));
     // }
+
+    bufferLights();
 
     requestAnimationFrame(draw);
 
