@@ -7,13 +7,13 @@ import {model} from "./model.js"
 
 import {mat4, common, vec3, vec4} from './gl-matrix-es6.js'
 //import { request } from "http"
-import { light, light_point, light_directional, light_spot, setNrLights, resetLightIndexes } from "./light.js"
+import { light, light_point, light_directional, light_spot, setNrLights, resetLightIndexes, lights } from "./light.js"
+import {pointLightBufferOffset, spotLightBufferOffset, directionalLightBufferOffset} from "./light.js"
 
 
-
-var MAX_POINT_LIGHTS = 2
-var MAX_SPOT_LIGHTS = 2
-var MAX_DIRECTIONAL_LIGHTS = 2
+export var MAX_POINT_LIGHTS = 2
+export var MAX_SPOT_LIGHTS = 2
+export var MAX_DIRECTIONAL_LIGHTS = 2
 
 var vertSource = `#version 300 es
 
@@ -97,6 +97,10 @@ layout (std140) uniform Material
 
 // layout (std140) uniform Lights
 // {
+    
+    // uniform int nrPointLights;
+    // uniform int nrSpotLights;
+    // uniform int nrDirectionalLights;
 //     //TODO:
 //     uniform light_point light_points[MAX_POINT_LIGHTS];
 //     uniform light_spot light_spots[MAX_SPOT_LIGHTS];
@@ -276,7 +280,6 @@ void main()
 var gl : WebGL2RenderingContext
 var program : WebGLProgram
 var models : Array<model>
-var lights: Array<light>
 var projection:mat4
 var view:mat4
 var lubo:WebGLBuffer|null
@@ -301,7 +304,6 @@ function initializeRenderer(canvas:HTMLCanvasElement)
     //var x = gl.createTexture()
     program = makeProgram()
     models = new Array<model>();
-    lights = new Array<light>();
     projection = mat4.create()
     view = mat4.create()
 
@@ -312,10 +314,7 @@ function initializeRenderer(canvas:HTMLCanvasElement)
     gl.useProgram(program)
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
-
-
     lubo = gl.createBuffer();
-    gl.bindBuffer(gl.UNIFORM_BUFFER, lubo);
 
 
 
@@ -487,10 +486,16 @@ function makeProgram(): WebGLProgram
 }
 
 
-function bufferLights()
+
+function bufferLights(gl:WebGL2RenderingContext, lubo:WebGLBuffer)
 {
-    
+    gl.bindBuffer(gl.UNIFORM_BUFFER, lubo);
+
+    let totalLightBufferSize = (light_point.sizeInBuffer()*MAX_POINT_LIGHTS)+(light_spot.sizeInBuffer() * MAX_SPOT_LIGHTS) + (light_directional.sizeInBuffer()*MAX_DIRECTIONAL_LIGHTS);
+    gl.bufferData(gl.UNIFORM_BUFFER, totalLightBufferSize, gl.DYNAMIC_DRAW)
 }
+
+
 
 
 function main()
@@ -516,6 +521,9 @@ function main()
     });
 
 
+    pointLightBufferOffset = 12;
+    spotLightBufferOffset = pointLightBufferOffset+light_point.sizeInBuffer()*MAX_POINT_LIGHTS;
+    directionalLightBufferOffset = spotLightBufferOffset+light_spot.sizeInBuffer()*MAX_SPOT_LIGHTS;
 
 
     

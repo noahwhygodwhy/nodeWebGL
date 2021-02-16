@@ -6,7 +6,6 @@ var loadedTextures = new Map<string,WebGLTexture>()
 
 
 
-
 function dirtyVec4(i:vec3):vec4
 {
     return vec4.fromValues(i[0], i[1], i[2], 1.0);
@@ -18,14 +17,8 @@ function makeTexture(gl:WebGL2RenderingContext ,modelName:string, imageName:stri
     var maybeT = loadedTextures.get(modelName+"-"+imageName)
     if(maybeT != undefined)
     {
-        //console.log("texture already loaded")
-
         return maybeT
     }
-    /*else
-    {
-        console.log("texture is not already loaded")
-    }*/
 
     const pixel = new Uint8Array([255, 255, 0, 255]);
 
@@ -152,7 +145,6 @@ export class material
         this.ubo = gl.createBuffer();
         gl.bindBuffer(gl.UNIFORM_BUFFER, this.ubo);
         gl.bufferData(gl.UNIFORM_BUFFER, 64, gl.STATIC_DRAW);
-
         gl.bufferSubData(gl.UNIFORM_BUFFER, 0,  new Float32Array(dirtyVec4(this.color_diffuse))); //TODO vec3 is broke, disect it
         gl.bufferSubData(gl.UNIFORM_BUFFER, 16, new Float32Array(dirtyVec4(this.color_specular)));
         gl.bufferSubData(gl.UNIFORM_BUFFER, 32, new Float32Array(dirtyVec4(this.color_ambient)));
@@ -225,3 +217,4 @@ export class material
         }
     }
 }
+

@@ -1,12 +1,30 @@
 
 import {mat4, common, vec3, vec4} from './gl-matrix-es6.js'
 
-
+import {MAX_POINT_LIGHTS, MAX_DIRECTIONAL_LIGHTS, MAX_SPOT_LIGHTS} from "./graphics.js"
 
 
 var pointLightIndex = 0;
 var directionalLightIndex = 0;
 var spotLightIndex = 0;
+
+var lubo:WebGLBuffer //buffer consists of three 4 byte ints, and then 3 variable sized light arrays sized to the maximum number of lights
+
+
+export var pointLightBufferOffset = 0
+export var spotLightBufferOffset = 0;
+export var directionalLightBufferOffset = 0;
+
+
+
+function bufferLights(gl:WebGL2RenderingContext)
+{
+    gl.bindBuffer(gl.UNIFORM_BUFFER, lubo);
+
+    let totalLightBufferSize = (light_point.sizeInBuffer()*MAX_POINT_LIGHTS)+(light_spot.sizeInBuffer() * MAX_SPOT_LIGHTS) + (light_directional.sizeInBuffer()*MAX_DIRECTIONAL_LIGHTS);
+    gl.bufferData(gl.UNIFORM_BUFFER, totalLightBufferSize, gl.DYNAMIC_DRAW);
+
+}
 
 
 export function resetLightIndexes()
@@ -42,7 +60,7 @@ export class light
     {
         console.error("lights use should not be called");
     }
-    sizeInBuffer()
+    static sizeInBuffer()
     {
         return 48;
     }
@@ -66,13 +84,14 @@ export class light_directional extends light
         gl.uniform4fv(gl.getUniformLocation(program, "light_directionals["+directionalLightIndex+"].specular"), this.specular as Float32Array)
         directionalLightIndex++;
     }
-    sizeInBuffer()
+    static sizeInBuffer()
     {
         return 16+super.sizeInBuffer();
     }
     
 
 }
+export var lights: Array<light> = new Array<light>();
 
 export class light_point extends light
 {
@@ -108,7 +127,7 @@ export class light_point extends light
         gl.uniform1f(gl.getUniformLocation(program, "light_points["+pointLightIndex+"].quadratic"), this.quadratic)
         pointLightIndex++;
     }
-    sizeInBuffer()
+    static sizeInBuffer()
     {
         return 28+super.sizeInBuffer();
     }
@@ -145,7 +164,7 @@ export class light_spot extends light_point
         gl.uniform1f(gl.getUniformLocation(program, "light_spots["+spotLightIndex+"].phi"), Math.cos(common.toRadian(this.angleDegrees)))
         spotLightIndex++;
     }
-    sizeInBuffer()
+    static sizeInBuffer()
     {
         return 20+super.sizeInBuffer();
     }
