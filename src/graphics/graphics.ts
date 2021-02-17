@@ -10,9 +10,9 @@ import {mat4, common, vec3, vec4} from './gl-matrix-es6.js'
 import { light, light_point, light_directional, light_spot, lights, bufferLights } from "./light.js"
 
 
-export var MAX_POINT_LIGHTS = 2
-export var MAX_SPOT_LIGHTS = 2
-export var MAX_DIRECTIONAL_LIGHTS = 2
+export var MAX_POINT_LIGHTS = 1
+export var MAX_SPOT_LIGHTS = 1
+export var MAX_DIRECTIONAL_LIGHTS = 1
 
 var vertSource = `#version 300 es
 
@@ -65,9 +65,13 @@ var fragSource = `#version 300 es
 
 precision mediump float;
 
-#define MAX_POINT_LIGHTS MAX_POINT_LIGHTS_REPLACE
-#define MAX_SPOT_LIGHTS MAX_SPOT_LIGHTS_REPLACE
-#define MAX_DIRECTIONAL_LIGHTS MAX_DIRECTIONAL_LIGHTS_REPLACE
+// const int MAX_POINT_LIGHTS = MAX_POINT_LIGHTS_REPLACE;
+// const int MAX_SPOT_LIGHTS_REPLACE = MAX_SPOT_LIGHTS_REPLACE_REPLACE;
+// const int MAX_DIRECTIONAL_LIGHTS_REPLACE = MAX_DIRECTIONAL_LIGHTS_REPLACE_REPLACE;
+
+// #define MAX_POINT_LIGHTS_REPLACE MAX_POINT_LIGHTS_REPLACE_REPLACE
+// #define MAX_SPOT_LIGHTS_REPLACE MAX_SPOT_LIGHTS_REPLACE_REPLACE
+// #define MAX_DIRECTIONAL_LIGHTS_REPLACE MAX_DIRECTIONAL_LIGHTS_REPLACE_REPLACE
 
 // uniform int nrPointLights;
 // uniform int nrSpotLights;
@@ -128,9 +132,9 @@ layout (std140) uniform Lights
     int nrSpotLights;
     int nrDirectionalLights;
     //TODO:
-    light_point light_points[MAX_POINT_LIGHTS];
-    light_spot light_spots[MAX_SPOT_LIGHTS];
-    light_directional light_directionals[MAX_DIRECTIONAL_LIGHTS];
+    light_point light_points[MAX_POINT_LIGHTS_REPLACE];
+    light_spot light_spots[MAX_SPOT_LIGHTS_REPLACE];
+    light_directional light_directionals[MAX_DIRECTIONAL_LIGHTS_REPLACE];
 };
 
 uniform sampler2D mat_diffuse; //TODO make into array of sampler2Ds with the assimp indexing
@@ -156,9 +160,9 @@ in vec2 frag_uv;
 
 
 
-// uniform light_point light_points[MAX_POINT_LIGHTS];
-// uniform light_spot light_spots[MAX_SPOT_LIGHTS];
-// uniform light_directional light_directionals[MAX_DIRECTIONAL_LIGHTS];
+// uniform light_point light_points[MAX_POINT_LIGHTS_REPLACE];
+// uniform light_spot light_spots[MAX_SPOT_LIGHTS_REPLACE];
+// uniform light_directional light_directionals[MAX_DIRECTIONAL_LIGHTS_REPLACE];
 
 
 out vec4 FragColor;
@@ -254,20 +258,28 @@ void main()
     vec3 normal = normalize(frag_normal);
     vec3 viewDir = normalize(viewPos-frag_pos);
 
-    for(int i = 0; i < min(nrPointLights, MAX_POINT_LIGHTS); i++)
+    for(int i = 0; i < min(nrPointLights, MAX_POINT_LIGHTS_REPLACE); i++)
     {
         result+=calcPointLight(light_points[i], normal, viewDir);
     }
-    for(int i = 0; i < min(nrDirectionalLights, MAX_DIRECTIONAL_LIGHTS); i++)
+    for(int i = 0; i < min(nrDirectionalLights, MAX_DIRECTIONAL_LIGHTS_REPLACE); i++)
     {
         result+=calcDirectionalLight(light_directionals[i], normal, viewDir);
     }
-    for(int i = 0; i < min(nrSpotLights, MAX_SPOT_LIGHTS); i++)
+    for(int i = 0; i < min(nrSpotLights, MAX_SPOT_LIGHTS_REPLACE); i++)
     {
         result+=calcSpotLight(light_spots[i], normal, viewDir);
     }
     
     FragColor = result;
+    // if(nrPointLights == 5)
+    // {
+    // }
+    // FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+    // if(nrPointLights == 5)
+    // {
+    //     FragColor = vec4(0.0, 1.0, 0.0, 1.0);
+    // }
 }
 `
 
@@ -410,7 +422,7 @@ function addModel(name:string, position?:vec3, rotation?:vec3)
 
 var canvasID = "c"
 
-window.onload = main;
+window.onload = main; 
 
 
 
@@ -453,11 +465,11 @@ function makeProgram(): WebGLProgram
 
 
 
+    fragSource = fragSource.replace(/MAX_SPOT_LIGHTS_REPLACE/g, ""+MAX_SPOT_LIGHTS)
+    fragSource = fragSource.replace(/MAX_DIRECTIONAL_LIGHTS_REPLACE/g, ""+MAX_DIRECTIONAL_LIGHTS)
+    fragSource = fragSource.replace(/MAX_POINT_LIGHTS_REPLACE/g, ""+MAX_POINT_LIGHTS)
 
-    fragSource = fragSource.replace("MAX_SPOT_LIGHTS_REPLACE", ""+MAX_SPOT_LIGHTS)
-    fragSource = fragSource.replace("MAX_DIRECTIONAL_LIGHTS_REPLACE", ""+MAX_DIRECTIONAL_LIGHTS)
-    fragSource = fragSource.replace("MAX_POINT_LIGHTS_REPLACE", ""+MAX_POINT_LIGHTS)
-
+    //console.log(fragSource)
 
     var fragShader = makeShader(fragSource, gl.FRAGMENT_SHADER)
     var vertShader = makeShader(vertSource, gl.VERTEX_SHADER)
@@ -537,6 +549,7 @@ function main()
     //     vec3.fromValues(0, -1, 0),
     //     50
     // ))
+    console.log("pushing new light");
     lights.push(new light_point(
         gl,
         vec4.fromValues(0.1, 0.1, 0.1, 1.0),
@@ -569,7 +582,7 @@ function main()
     //     var z = (Math.random()*40)-20
     //     addModel(modelName, vec3.fromValues(x, y, z), vec3.fromValues(rotx, roty, rotz));
     // }
-
+    console.log("buffering lights");
     bufferLights(gl, program);
 
     requestAnimationFrame(draw);

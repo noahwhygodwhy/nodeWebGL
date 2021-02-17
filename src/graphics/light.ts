@@ -15,14 +15,19 @@ export var lights:Array<light> = new Array<light>();
 // export var directionalLights: Array<light_directional> = new Array<light_directional>();
 
 
-
+//TODO: https://stackoverflow.com/questions/44629165/bind-multiple-uniform-buffer-objects
 
 export function bufferLights(gl:WebGL2RenderingContext, program:WebGLProgram)
 {
+    console.log("bufferLights")
     gl.bindBuffer(gl.UNIFORM_BUFFER, light.lubo);
-
-    let totalLightBufferSize = (light_point.sizeInBuffer()*MAX_POINT_LIGHTS)+(light_spot.sizeInBuffer() * MAX_SPOT_LIGHTS) + (light_directional.sizeInBuffer()*MAX_DIRECTIONAL_LIGHTS);
-    gl.bufferData(gl.UNIFORM_BUFFER, totalLightBufferSize, gl.DYNAMIC_DRAW);
+                                // v //don't ask, i don't know, it just works
+    let totalLightBufferSize = 20+8+8+12+(light_point.sizeInBuffer()*MAX_POINT_LIGHTS)+(light_spot.sizeInBuffer() * MAX_SPOT_LIGHTS) + (light_directional.sizeInBuffer()*MAX_DIRECTIONAL_LIGHTS);
+    // console.log("totalLightBufferSize:" + totalLightBufferSize)
+    // console.log("light_point.sizeInBuffer(): " + light_point.sizeInBuffer())
+    // console.log("UNIFORM_BLOCK_DATA_SIZE:"+gl.UNIFORM_BLOCK_DATA_SIZE);
+    gl.bufferData(gl.UNIFORM_BUFFER, totalLightBufferSize, gl.STATIC_DRAW);
+    //gl.bufferData(gl.UNIFORM_BUFFER, 12, gl.DYNAMIC_DRAW);
 
 
     let pointLightIndex = 0;
@@ -48,8 +53,8 @@ export function bufferLights(gl:WebGL2RenderingContext, program:WebGLProgram)
         }
     }
     gl.bindBuffer(gl.UNIFORM_BUFFER, light.lubo);
-    gl.bufferSubData(gl.UNIFORM_BUFFER, 0, new Float32Array([pointLightIndex, spotLightIndex, directionalLightIndex]))
-
+    gl.bufferSubData(gl.UNIFORM_BUFFER, 0, new Int32Array([5, spotLightIndex, directionalLightIndex]))
+    gl.bindBuffer(gl.UNIFORM_BUFFER, null)
 }
 
 
@@ -175,7 +180,7 @@ export class light_point extends light
         gl.bufferSubData(gl.UNIFORM_BUFFER, index+0, new Float32Array(this.ambient));
         gl.bufferSubData(gl.UNIFORM_BUFFER, index+16, new Float32Array(this.diffuse));
         gl.bufferSubData(gl.UNIFORM_BUFFER, index+32, new Float32Array(this.specular));
-        gl.bufferSubData(gl.UNIFORM_BUFFER, index+48, new Float32Array(this.position));
+        gl.bufferSubData(gl.UNIFORM_BUFFER, index+48, new Float32Array(dirtyVec4(this.position)));
         gl.bufferSubData(gl.UNIFORM_BUFFER, index+64, new Float32Array([this.constant, this.linear, this.quadratic]));
         gl.bindBuffer(gl.UNIFORM_BUFFER, null);
     }
