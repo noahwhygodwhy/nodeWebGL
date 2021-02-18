@@ -293,7 +293,7 @@ export class model
     materials:Array<material>
     //@ts-ignore
     transform: mat4 //model will still have a transform
-    constructor(modelName:string, gl:WebGL2RenderingContext, program :WebGLProgram, position?:vec3, rotation?:vec3)
+    constructor(modelName:string, gl:WebGL2RenderingContext, program :WebGLProgram, position?:vec3, rotation?:vec3, scale?:vec3)
     {
         this.id = index;
         index++;
@@ -344,6 +344,10 @@ export class model
         }
         
     
+        if(scale!= undefined)
+        {
+            mat4.scale(this.transform, this.transform, scale);
+        }
         if(rotation!= undefined)
         {
             mat4.rotateX(this.transform, this.transform, common.toRadian(rotation[0]))
